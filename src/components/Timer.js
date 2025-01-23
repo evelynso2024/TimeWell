@@ -6,6 +6,25 @@ function Timer() {
   const [time, setTime] = useState(0);
   const [recentTasks, setRecentTasks] = useState([]);
 
+  // Sound effects
+  const playSound = (type) => {
+    const audio = new Audio();
+    audio.volume = 0.3;
+    
+    switch(type) {
+      case 'start':
+        audio.src = 'https://assets.mixkit.co/active_storage/sfx/2568/2568.wav';
+        break;
+      case 'end':
+        audio.src = 'https://assets.mixkit.co/active_storage/sfx/2571/2571.wav';
+        break;
+      default:
+        return;
+    }
+    
+    audio.play().catch(e => console.log('Audio play failed:', e));
+  };
+
   // Timer logic
   useEffect(() => {
     let intervalId;
@@ -29,7 +48,7 @@ function Timer() {
   const handleStart = () => {
     if (task.trim()) {
       setIsRunning(true);
-      // Play start sound here
+      playSound('start');
     }
   };
 
@@ -37,6 +56,7 @@ function Timer() {
   const handleEnd = () => {
     if (isRunning) {
       setIsRunning(false);
+      playSound('end');
       // Add task to recent tasks
       setRecentTasks(prev => [{
         name: task,
@@ -46,7 +66,6 @@ function Timer() {
       // Reset
       setTask('');
       setTime(0);
-      // Play end sound here
     }
   };
 
