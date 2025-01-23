@@ -16,7 +16,7 @@ function Timer() {
         audio.src = 'https://assets.mixkit.co/active_storage/sfx/2568/2568.wav';
         break;
       case 'end':
-        audio.src = 'https://assets.mixkit.co/active_storage/sfx/2571/2571.wav';
+        audio.src = 'https://assets.mixkit.co/active_storage/sfx/2558/2558.wav';
         break;
       default:
         return;
@@ -56,7 +56,7 @@ function Timer() {
   const handleEnd = () => {
     if (isRunning) {
       setIsRunning(false);
-      playSound('end');
+      playSound('end'); // This should now play with the new sound URL
       // Add task to recent tasks
       setRecentTasks(prev => [{
         name: task,
