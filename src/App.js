@@ -13,14 +13,14 @@ function App() {
         {/* Navigation Tabs */}
         <nav className="bg-white shadow-lg">
           <div className="max-w-6xl mx-auto px-4">
-            <div className="flex space-x-4">
+            <div className="flex justify-center space-x-1">
               <NavLink
                 to="/"
                 className={({ isActive }) =>
-                  `px-3 py-4 text-sm font-medium ${
+                  `px-6 py-3 text-sm font-medium rounded-t-lg transition-colors duration-200 ${
                     isActive
-                      ? 'text-blue-600 border-b-2 border-blue-600'
-                      : 'text-gray-500 hover:text-blue-600'
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`
                 }
               >
@@ -29,10 +29,10 @@ function App() {
               <NavLink
                 to="/tasks"
                 className={({ isActive }) =>
-                  `px-3 py-4 text-sm font-medium ${
+                  `px-6 py-3 text-sm font-medium rounded-t-lg transition-colors duration-200 ${
                     isActive
-                      ? 'text-blue-600 border-b-2 border-blue-600'
-                      : 'text-gray-500 hover:text-blue-600'
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`
                 }
               >
@@ -41,10 +41,10 @@ function App() {
               <NavLink
                 to="/summary"
                 className={({ isActive }) =>
-                  `px-3 py-4 text-sm font-medium ${
+                  `px-6 py-3 text-sm font-medium rounded-t-lg transition-colors duration-200 ${
                     isActive
-                      ? 'text-blue-600 border-b-2 border-blue-600'
-                      : 'text-gray-500 hover:text-blue-600'
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`
                 }
               >
@@ -65,6 +65,3 @@ function App() {
       </div>
     </Router>
   );
-}
-
-export default App;
