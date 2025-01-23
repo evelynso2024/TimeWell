@@ -1,8 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
+import Timer from './components/Timer';
 
 // Placeholder components
-const Timer = () => <div className="text-xl">Timer Page</div>;
 const AllTasks = () => <div className="text-xl">All Tasks Page</div>;
 const Summary = () => <div className="text-xl">Summary Page</div>;
 
