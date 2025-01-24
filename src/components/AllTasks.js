@@ -6,20 +6,13 @@ function AllTasks() {
   const [endDate, setEndDate] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const datePickerRef = useRef(null);
-  const [tasks, setTasks] = useState([
-    {
-      name: "Sample Task 1",
-      duration: "00:30:00",
-      timestamp: new Date().toISOString(),
-      leverage: ""
-    },
-    {
-      name: "Sample Task 2",
-      duration: "01:15:00",
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      leverage: ""
-    }
-  ]);
+  const [tasks, setTasks] = useState([]);
+
+  // Load all tasks on component mount
+  useEffect(() => {
+    const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
+    setTasks(allTasks);
+  }, []);
 
   // Handle clicking outside of date picker
   useEffect(() => {
@@ -39,11 +32,13 @@ function AllTasks() {
     const updatedTasks = [...tasks];
     updatedTasks[index] = { ...updatedTasks[index], leverage: value };
     setTasks(updatedTasks);
+    
+    // Update localStorage
+    localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
   };
 
   const handleDateRangeSelect = () => {
     if (startDate && endDate) {
-      // Handle custom date range filtering
       setShowDatePicker(false);
     }
   };
@@ -106,31 +101,37 @@ function AllTasks() {
 
       {/* Tasks List */}
       <div className="space-y-3">
-        {tasks.map((task, index) => (
-          <div key={index} className="p-4 bg-white rounded-lg shadow">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <h3 className="font-medium">{task.name}</h3>
-                <p className="text-sm text-gray-500">
-                  {new Date(task.timestamp).toLocaleString()}
-                </p>
-              </div>
-              <div className="flex items-center space-x-4">
-                <span className="font-mono">{task.duration}</span>
-                <select
-                  value={task.leverage}
-                  onChange={(e) => handleLeverageChange(index, e.target.value)}
-                  className="p-2 border rounded-lg bg-gray-50"
-                >
-                  <option value="">Rank</option>
-                  <option value="high">High Leverage</option>
-                  <option value="medium">Medium Leverage</option>
-                  <option value="low">Low Leverage</option>
-                </select>
+        {tasks.length === 0 ? (
+          <div className="text-gray-500 text-center py-8">
+            No tasks recorded yet
+          </div>
+        ) : (
+          tasks.map((task, index) => (
+            <div key={index} className="p-4 bg-white rounded-lg shadow">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <h3 className="font-medium">{task.name}</h3>
+                  <p className="text-sm text-gray-500">
+                    {new Date(task.timestamp).toLocaleString()}
+                  </p>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <span className="font-mono">{task.duration}</span>
+                  <select
+                    value={task.leverage}
+                    onChange={(e) => handleLeverageChange(index, e.target.value)}
+                    className="p-2 border rounded-lg bg-gray-50"
+                  >
+                    <option value="">Rank</option>
+                    <option value="high">High Leverage</option>
+                    <option value="medium">Medium Leverage</option>
+                    <option value="low">Low Leverage</option>
+                  </select>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );
