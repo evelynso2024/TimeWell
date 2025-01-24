@@ -45,7 +45,7 @@ function Timer() {
       name: task,
       duration: elapsedTime,
       timestamp: new Date().toISOString(),
-      leverage: 'High'
+      leverage: ''
     };
 
     const existingTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
@@ -61,6 +61,25 @@ function Timer() {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const formatDuration = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    return `${mins} min${mins !== 1 ? 's' : ''}`;
+  };
+
+  const updateTaskLeverage = (taskId, leverage) => {
+    const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
+    const updatedAllTasks = allTasks.map(task => 
+      task.id === taskId ? { ...task, leverage } : task
+    );
+    localStorage.setItem('allTasks', JSON.stringify(updatedAllTasks));
+
+    setRecentTasks(prevTasks => 
+      prevTasks.map(task => 
+        task.id === taskId ? { ...task, leverage } : task
+      )
+    );
   };
 
   return (
@@ -99,13 +118,28 @@ function Timer() {
 
             <div className="mt-8">
               <h2 className="text-lg font-semibold mb-4">Recent tasks</h2>
-              <ul className="space-y-2">
+              <ul className="space-y-3">
                 {recentTasks.map((task) => (
                   <li 
                     key={task.id} 
-                    className="text-gray-600 hover:text-gray-800"
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded"
                   >
-                    {task.name}
+                    <div className="flex-1">
+                      <span className="text-gray-800">{task.name}</span>
+                      <span className="text-gray-500 text-sm ml-2">
+                        {formatDuration(task.duration)}
+                      </span>
+                    </div>
+                    <select
+                      value={task.leverage || ''}
+                      onChange={(e) => updateTaskLeverage(task.id, e.target.value)}
+                      className="ml-4 p-2 border rounded text-sm bg-white"
+                    >
+                      <option value="">Rank</option>
+                      <option value="High">High leverage</option>
+                      <option value="Medium">Medium leverage</option>
+                      <option value="Low">Low leverage</option>
+                    </select>
                   </li>
                 ))}
               </ul>
