@@ -35,7 +35,6 @@ function Timer() {
   const handleStart = () => {
     if (task.trim()) {
       setIsRunning(true);
-      playSound();
     }
   };
 
@@ -43,7 +42,6 @@ function Timer() {
   const handleEnd = () => {
     if (isRunning) {
       setIsRunning(false);
-      playSound();
       
       // Create new task
       const newTask = {
@@ -69,13 +67,6 @@ function Timer() {
       setTask('');
       setTime(0);
     }
-  };
-
-  // Play sound effect
-  const playSound = () => {
-    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568.wav');
-    audio.volume = 0.3;
-    audio.play().catch(e => console.log('Audio play failed:', e));
   };
 
   return (
