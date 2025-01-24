@@ -12,12 +12,13 @@ function Summary() {
   const [selectedTasks, setSelectedTasks] = useState([]);
   const [modalTitle, setModalTitle] = useState('');
 
-  // Time conversion functions
+  // Convert HH:MM:SS to seconds
   const timeToSeconds = (timeStr) => {
     const [hours, minutes, seconds] = timeStr.split(':').map(Number);
     return hours * 3600 + minutes * 60 + seconds;
   };
 
+  // Convert seconds to HH:MM:SS
   const secondsToTime = (seconds) => {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
@@ -121,3 +122,88 @@ function Summary() {
               </div>
             </div>
           </div>
+
+          {/* Low Leverage */}
+          <div className="border-l-4 border-red-500 pl-4">
+            <h3 className="text-lg font-semibold mb-2">Low Leverage</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <button 
+                  onClick={() => handleTasksClick('low', leverageStats.low.tasks)}
+                  className="text-gray-600 hover:text-blue-500"
+                >
+                  Tasks
+                </button>
+                <p className="text-2xl font-bold">{leverageStats.low.count}</p>
+              </div>
+              <div>
+                <p className="text-gray-600">Time</p>
+                <p className="text-2xl font-bold font-mono">{leverageStats.low.time}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Unranked */}
+          <div className="border-l-4 border-gray-300 pl-4">
+            <h3 className="text-lg font-semibold mb-2">Unranked</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <button 
+                  onClick={() => handleTasksClick('unranked', leverageStats.unranked.tasks)}
+                  className="text-gray-600 hover:text-blue-500"
+                >
+                  Tasks
+                </button>
+                <p className="text-2xl font-bold">{leverageStats.unranked.count}</p>
+              </div>
+              <div>
+                <p className="text-gray-600">Time</p>
+                <p className="text-2xl font-bold font-mono">{leverageStats.unranked.time}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
+            <div className="p-4 border-b flex justify-between items-center">
+              <h3 className="text-xl font-semibold">{modalTitle}</h3>
+              <button 
+                onClick={() => setShowModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-4 max-h-[70vh] overflow-y-auto">
+              {selectedTasks.length === 0 ? (
+                <p className="text-gray-500 text-center">No tasks found</p>
+              ) : (
+                <div className="space-y-3">
+                  {selectedTasks.map((task, index) => (
+                    <div key={index} className="p-3 bg-gray-50 rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="font-medium">{task.name}</p>
+                          <p className="text-sm text-gray-500">
+                            {new Date(task.timestamp).toLocaleString()}
+                          </p>
+                        </div>
+                        <span className="font-mono">{task.duration}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default Summary;
