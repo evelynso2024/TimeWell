@@ -9,7 +9,7 @@ function Timer() {
   // Load recent tasks on component mount
   useEffect(() => {
     const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-    setRecentTasks(allTasks.slice(0, 5));  // Get 5 most recent tasks
+    setRecentTasks(allTasks.slice(0, 5));
   }, []);
 
   // Sound effects
@@ -57,7 +57,7 @@ function Timer() {
         name: task,
         duration: formatTime(time),
         timestamp: new Date().toISOString(),
-        leverage: ""  // Default empty leverage
+        leverage: ""
       };
 
       // Get existing tasks from localStorage
@@ -79,18 +79,40 @@ function Timer() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      {/* Timer Display */}
-      <div className="text-center mb-8">
-        <div className="text-6xl font-mono mb-4">
-          {formatTime(time)}
-        </div>
-      </div>
+    <div className="max-w-2xl mx-auto p-6">
+      {isRunning ? (
+        // Timer Running Mode - Minimal Interface
+        <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8">
+          {/* Large Timer Display */}
+          <div className="text-8xl font-mono mb-8">
+            {formatTime(time)}
+          </div>
 
-      {/* Task Input and Controls */}
-      <div className="space-y-4">
-        {!isRunning ? (
-          <>
+          {/* Current Task Display */}
+          <div className="text-4xl font-medium text-center mb-8">
+            {task}
+          </div>
+
+          {/* End Timer Button */}
+          <button
+            onClick={handleEnd}
+            className="py-4 px-8 bg-red-500 text-white text-xl rounded-lg hover:bg-red-600"
+          >
+            End Timer
+          </button>
+        </div>
+      ) : (
+        // Timer Stopped Mode - Full Interface
+        <div>
+          {/* Timer Display */}
+          <div className="text-center mb-8">
+            <div className="text-6xl font-mono mb-4">
+              {formatTime(time)}
+            </div>
+          </div>
+
+          {/* Task Input and Start Button */}
+          <div className="space-y-4 mb-8">
             <input
               type="text"
               value={task}
@@ -105,41 +127,29 @@ function Timer() {
             >
               Start Timer
             </button>
-          </>
-        ) : (
-          <>
-            <div className="p-3 bg-gray-100 rounded-lg text-center font-medium">
-              {task}
-            </div>
-            <button
-              onClick={handleEnd}
-              className="w-full py-3 bg-red-500 text-white rounded-lg hover:bg-red-600"
-            >
-              End Timer
-            </button>
-          </>
-        )}
-      </div>
+          </div>
 
-      {/* Recent Tasks - Always show section */}
-      <div className="mt-8">
-        <h2 className="text-lg font-medium mb-4">Recent Tasks</h2>
-        <div className="space-y-2">
-          {recentTasks.map((recentTask, index) => (
-            <div key={index} className="p-3 bg-white rounded-lg shadow">
-              <div className="flex justify-between items-center">
-                <span>{recentTask.name}</span>
-                <span className="text-gray-500">{recentTask.duration}</span>
-              </div>
+          {/* Recent Tasks Section */}
+          <div className="mt-8">
+            <h2 className="text-lg font-medium mb-4">Recent Tasks</h2>
+            <div className="space-y-2">
+              {recentTasks.map((recentTask, index) => (
+                <div key={index} className="p-3 bg-white rounded-lg shadow">
+                  <div className="flex justify-between items-center">
+                    <span>{recentTask.name}</span>
+                    <span className="text-gray-500">{recentTask.duration}</span>
+                  </div>
+                </div>
+              ))}
+              {recentTasks.length === 0 && (
+                <div className="text-gray-500 text-center py-4">
+                  No recent tasks
+                </div>
+              )}
             </div>
-          ))}
-          {recentTasks.length === 0 && (
-            <div className="text-gray-500 text-center py-4">
-              No recent tasks
-            </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
