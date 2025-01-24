@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-function Timer() {
+function Timer({ onTimerStateChange }) {
   const [task, setTask] = useState('');
   const [isRunning, setIsRunning] = useState(false);
   const [time, setTime] = useState(0);
@@ -22,6 +22,11 @@ function Timer() {
     }
     return () => clearInterval(intervalId);
   }, [isRunning]);
+
+  // Notify parent of timer state changes
+  useEffect(() => {
+    onTimerStateChange(isRunning);
+  }, [isRunning, onTimerStateChange]);
 
   // Format time to HH:MM:SS
   const formatTime = (seconds) => {
