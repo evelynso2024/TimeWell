@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 
 function Timer() {
   const [isTimerActive, setIsTimerActive] = useState(false);
@@ -7,10 +7,23 @@ function Timer() {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [recentTasks, setRecentTasks] = useState([]);
 
-  const playButtonSound = useCallback(() => {
-    const audio = new Audio('https://www.soundjay.com/button/button-09.mp3');
-    audio.play().catch(e => console.log('Audio play failed:', e));
-  }, []);
+  // Create audio context on first interaction
+  const playClickSound = () => {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+
+    oscillator.start();
+    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 0.1);
+    oscillator.stop(audioContext.currentTime + 0.1);
+  };
 
   useEffect(() => {
     const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
@@ -31,13 +44,13 @@ function Timer() {
     e.preventDefault();
     if (!task.trim()) return;
     
-    playButtonSound();
+    playClickSound();
     setIsTimerActive(true);
     setStartTime(Date.now());
   };
 
   const endTimer = () => {
-    playButtonSound();
+    playClickSound();
     setIsTimerActive(false);
     
     const newTask = {
