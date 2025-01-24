@@ -6,10 +6,6 @@ function Timer() {
   const [time, setTime] = useState(0);
   const [recentTasks, setRecentTasks] = useState([]);
 
-  // Create Audio objects
-  const startSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568.wav');
-  const endSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568.wav');
-
   // Load recent tasks on component mount
   useEffect(() => {
     const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
@@ -35,11 +31,20 @@ function Timer() {
     return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Play notification sound
+  const playSound = () => {
+    const audio = document.getElementById('notificationSound');
+    if (audio) {
+      audio.currentTime = 0;
+      audio.play().catch(e => console.log('Audio play failed:', e));
+    }
+  };
+
   // Handle starting timer
   const handleStart = () => {
     if (task.trim()) {
       setIsRunning(true);
-      startSound.play().catch(error => console.log('Sound play failed:', error));
+      playSound();
     }
   };
 
@@ -47,7 +52,7 @@ function Timer() {
   const handleEnd = () => {
     if (isRunning) {
       setIsRunning(false);
-      endSound.play().catch(error => console.log('Sound play failed:', error));
+      playSound();
       
       // Create new task
       const newTask = {
@@ -77,6 +82,11 @@ function Timer() {
 
   return (
     <div className="max-w-2xl mx-auto p-6">
+      {/* Audio element */}
+      <audio id="notificationSound">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2568/2568.wav" type="audio/wav" />
+      </audio>
+
       {isRunning ? (
         <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-12">
           <div className="text-6xl font-medium text-center">
