@@ -5,6 +5,7 @@ function Timer({ onTimerStateChange }) {
   const [isRunning, setIsRunning] = useState(false);
   const [time, setTime] = useState(0);
   const [recentTasks, setRecentTasks] = useState([]);
+  const [showTimer, setShowTimer] = useState(false);
 
   // Load recent tasks on component mount
   useEffect(() => {
@@ -49,6 +50,7 @@ function Timer({ onTimerStateChange }) {
   const handleStart = () => {
     if (task.trim()) {
       setIsRunning(true);
+      setShowTimer(true);
       playSound();
     }
   };
@@ -57,6 +59,7 @@ function Timer({ onTimerStateChange }) {
   const handleEnd = () => {
     if (isRunning) {
       setIsRunning(false);
+      setShowTimer(false);
       playSound();
       
       // Create new task
@@ -85,6 +88,13 @@ function Timer({ onTimerStateChange }) {
     }
   };
 
+  // Handle key press for Return key
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && task.trim()) {
+      handleStart();
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto p-6">
       {/* Audio element */}
@@ -109,16 +119,19 @@ function Timer({ onTimerStateChange }) {
         </div>
       ) : (
         <div>
-          <div className="text-center mb-8">
-            <div className="text-6xl font-mono mb-4">
-              {formatTime(time)}
+          {showTimer && (
+            <div className="text-center mb-8">
+              <div className="text-6xl font-mono mb-4">
+                {formatTime(time)}
+              </div>
             </div>
-          </div>
+          )}
           <div className="space-y-4">
             <input
               type="text"
               value={task}
               onChange={(e) => setTask(e.target.value)}
+              onKeyPress={handleKeyPress}
               placeholder="Enter your task..."
               className="w-full p-3 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
