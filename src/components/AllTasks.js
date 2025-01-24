@@ -4,8 +4,8 @@ function AllTasks() {
   const [tasks, setTasks] = useState([]);
   const [timeFilter, setTimeFilter] = useState('24h');
   const [selectedTasks, setSelectedTasks] = useState(new Set());
-  const [filterType, setFilterType] = useState('all'); // 'all', 'high', 'medium', 'low'
-  const [sortBy, setSortBy] = useState('newest'); // 'newest', 'oldest', 'duration'
+  const [filterType, setFilterType] = useState('all');
+  const [sortBy, setSortBy] = useState('newest');
 
   useEffect(() => {
     loadTasks();
@@ -50,7 +50,58 @@ function AllTasks() {
     setSelectedTasks(new Set());
   };
 
-  // ... existing helper functions (formatDuration, formatTimestamp) ...
+  const formatDuration = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    return `${mins} min${mins !== 1 ? 's' : ''}`;
+  };
+
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedTasks.size === tasks.length) {
+      setSelectedTasks(new Set());
+    } else {
+      setSelectedTasks(new Set(tasks.map(task => task.id)));
+    }
+  };
+
+  const toggleTaskSelection = (taskId) => {
+    const newSelected = new Set(selectedTasks);
+    if (newSelected.has(taskId)) {
+      newSelected.delete(taskId);
+    } else {
+      newSelected.add(taskId);
+    }
+    setSelectedTasks(newSelected);
+  };
+
+  const deleteSelectedTasks = () => {
+    if (window.confirm('Are you sure you want to delete the selected tasks?')) {
+      const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
+      const updatedTasks = allTasks.filter(task => !selectedTasks.has(task.id));
+      localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
+      loadTasks();
+    }
+  };
+
+  const updateTaskLeverage = (taskId, leverage) => {
+    const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
+    const updatedTasks = allTasks.map(task => 
+      task.id === taskId ? { ...task, leverage } : task
+    );
+    localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
+    loadTasks();
+  };
+
+  const deleteTask = (taskId) => {
+    const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
+    const updatedTasks = allTasks.filter(task => task.id !== taskId);
+    localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
+    loadTasks();
+  };
 
   return (
     <div className="max-w-4xl mx-auto p-6">
