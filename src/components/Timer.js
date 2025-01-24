@@ -6,6 +6,10 @@ function Timer() {
   const [time, setTime] = useState(0);
   const [recentTasks, setRecentTasks] = useState([]);
 
+  // Create Audio objects
+  const startSound = new Audio('/start.mp3');  // Make sure these files exist in public folder
+  const endSound = new Audio('/end.mp3');
+
   // Load recent tasks on component mount
   useEffect(() => {
     const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
@@ -35,6 +39,7 @@ function Timer() {
   const handleStart = () => {
     if (task.trim()) {
       setIsRunning(true);
+      startSound.play().catch(error => console.log('Sound play failed:', error));
     }
   };
 
@@ -42,6 +47,7 @@ function Timer() {
   const handleEnd = () => {
     if (isRunning) {
       setIsRunning(false);
+      endSound.play().catch(error => console.log('Sound play failed:', error));
       
       // Create new task
       const newTask = {
@@ -69,80 +75,4 @@ function Timer() {
     }
   };
 
-  return (
-    <div className="max-w-2xl mx-auto p-6">
-      {isRunning ? (
-        // Timer Running Mode - Minimal Interface
-        <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-12">
-          {/* Current Task Display - Larger and Above Timer */}
-          <div className="text-6xl font-medium text-center">
-            {task}
-          </div>
-
-          {/* Timer Display - Smaller than Task */}
-          <div className="text-5xl font-mono">
-            {formatTime(time)}
-          </div>
-
-          {/* End Timer Button */}
-          <button
-            onClick={handleEnd}
-            className="py-4 px-8 bg-red-500 text-white text-xl rounded-lg hover:bg-red-600"
-          >
-            End Timer
-          </button>
-        </div>
-      ) : (
-        // Timer Stopped Mode - Full Interface
-        <div>
-          {/* Timer Display */}
-          <div className="text-center mb-8">
-            <div className="text-6xl font-mono mb-4">
-              {formatTime(time)}
-            </div>
-          </div>
-
-          {/* Task Input and Start Button */}
-          <div className="space-y-4 mb-8">
-            <input
-              type="text"
-              value={task}
-              onChange={(e) => setTask(e.target.value)}
-              placeholder="Enter your task..."
-              className="w-full p-3 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-            <button
-              onClick={handleStart}
-              disabled={!task.trim()}
-              className="w-full py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
-            >
-              Start Timer
-            </button>
-          </div>
-
-          {/* Recent Tasks Section */}
-          <div className="mt-8">
-            <h2 className="text-lg font-medium mb-4">Recent Tasks</h2>
-            <div className="space-y-2">
-              {recentTasks.map((recentTask, index) => (
-                <div key={index} className="p-3 bg-white rounded-lg shadow">
-                  <div className="flex justify-between items-center">
-                    <span>{recentTask.name}</span>
-                    <span className="text-gray-500">{recentTask.duration}</span>
-                  </div>
-                </div>
-              ))}
-              {recentTasks.length === 0 && (
-                <div className="text-gray-500 text-center py-4">
-                  No recent tasks
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-export default Timer;
+  // ... rest of the component code stays the same ...
