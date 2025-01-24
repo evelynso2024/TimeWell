@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 function AllTasks() {
-  const [tasks, setTasks] = useState([]);
+  const [tasks, setTasks] = useState([]); 
   const [timeFilter, setTimeFilter] = useState('24h');
   const [selectedTasks, setSelectedTasks] = useState(new Set());
   const [filterType, setFilterType] = useState('all');
