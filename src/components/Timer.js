@@ -6,6 +6,12 @@ function Timer() {
   const [time, setTime] = useState(0);
   const [recentTasks, setRecentTasks] = useState([]);
 
+  // Load recent tasks on component mount
+  useEffect(() => {
+    const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
+    setRecentTasks(allTasks.slice(0, 5));  // Get 5 most recent tasks
+  }, []);
+
   // Sound effects
   const playSound = () => {
     const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568.wav');
@@ -54,12 +60,17 @@ function Timer() {
         leverage: ""  // Default empty leverage
       };
 
-      // Update recent tasks (always keep 5)
-      setRecentTasks(prev => [newTask, ...prev].slice(0, 5));
-
-      // Store in localStorage for All Tasks page
+      // Get existing tasks from localStorage
       const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-      localStorage.setItem('allTasks', JSON.stringify([newTask, ...allTasks]));
+      
+      // Add new task to the beginning
+      const updatedTasks = [newTask, ...allTasks];
+      
+      // Update localStorage with all tasks
+      localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
+      
+      // Update recent tasks state with 5 most recent
+      setRecentTasks(updatedTasks.slice(0, 5));
 
       // Reset
       setTask('');
