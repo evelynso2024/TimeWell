@@ -9,13 +9,11 @@ function Timer() {
   const [recentTasks, setRecentTasks] = useState([]);
   const navigate = useNavigate();
 
-  // Load recent tasks
   useEffect(() => {
     const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-    setRecentTasks(allTasks.slice(-5).reverse()); // Get last 5 tasks, most recent first
+    setRecentTasks(allTasks.slice(-5).reverse());
   }, []);
 
-  // Handle timer
   useEffect(() => {
     let intervalId;
     if (isTimerActive) {
@@ -27,7 +25,7 @@ function Timer() {
   }, [isTimerActive, startTime]);
 
   const startTimer = (e) => {
-    e.preventDefault(); // Prevent form submission
+    e.preventDefault();
     if (!task.trim()) return;
     
     setIsTimerActive(true);
@@ -48,12 +46,9 @@ function Timer() {
     const existingTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
     localStorage.setItem('allTasks', JSON.stringify([...existingTasks, newTask]));
     
-    // Reset states
     setTask('');
     setElapsedTime(0);
     setStartTime(null);
-    
-    // Update recent tasks
     setRecentTasks([newTask, ...recentTasks.slice(0, 4)]);
   };
 
@@ -65,45 +60,44 @@ function Timer() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
-        What will you do next?
-      </h1>
-
       {!isTimerActive ? (
-        <div className="bg-white rounded-lg shadow p-6">
-          <form onSubmit={startTimer} className="mb-6">
-            <div className="flex gap-4">
+        <>
+          <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
+            What will you do next?
+          </h1>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <form onSubmit={startTimer} className="mb-6">
               <input
                 type="text"
                 value={task}
                 onChange={(e) => setTask(e.target.value)}
                 placeholder="Enter task name"
-                className="flex-1 p-2 border rounded focus:outline-none focus:border-blue-500"
+                className="w-full p-2 mb-4 border rounded focus:outline-none focus:border-blue-500"
               />
               <button
                 type="submit"
-                className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600"
+                className="w-full bg-blue-500 text-white px-8 py-3 rounded hover:bg-blue-600"
               >
                 Start Timer
               </button>
-            </div>
-          </form>
+            </form>
 
-          {/* Recent Tasks */}
-          <div className="mt-8">
-            <h2 className="text-lg font-semibold mb-4">Recent tasks</h2>
-            <ul className="space-y-2">
-              {recentTasks.map((task) => (
-                <li 
-                  key={task.id} 
-                  className="text-gray-600 hover:text-gray-800"
-                >
-                  {task.name}
-                </li>
-              ))}
-            </ul>
+            <div className="mt-8">
+              <h2 className="text-lg font-semibold mb-4">Recent tasks</h2>
+              <ul className="space-y-2">
+                {recentTasks.map((task) => (
+                  <li 
+                    key={task.id} 
+                    className="text-gray-600 hover:text-gray-800"
+                  >
+                    {task.name}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
-        </div>
+        </>
       ) : (
         <div className="bg-white rounded-lg shadow p-6 text-center">
           <div className="text-4xl font-bold mb-4 text-gray-800">
@@ -114,7 +108,7 @@ function Timer() {
           </div>
           <button
             onClick={endTimer}
-            className="bg-red-500 text-white px-8 py-3 rounded hover:bg-red-600"
+            className="w-full bg-red-500 text-white px-8 py-3 rounded hover:bg-red-600"
           >
             End Timer
           </button>
