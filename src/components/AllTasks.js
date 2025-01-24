@@ -144,7 +144,7 @@ function AllTasks() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="p-2 border rounded bg-white"
+            className="p-2 border rounded bg-white min-w-[200px]"
           >
             <optgroup label="DATE">
               <option value="newest">Newest to Oldest</option>
