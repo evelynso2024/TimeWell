@@ -1,170 +1,145 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-function Timer({ onTimerStateChange }) {
-  const [task, setTask] = useState('');
-  const [isRunning, setIsRunning] = useState(false);
-  const [time, setTime] = useState(0);
-  const [recentTasks, setRecentTasks] = useState([]);
-  const [showTimer, setShowTimer] = useState(false);
+function Timer() {
+  const [time, setTime] = useState(1500); // 25 minutes in seconds
+  const [isActive, setIsActive] = useState(false);
+  const [taskName, setTaskName] = useState('');
+  const [leverage, setLeverage] = useState('High');
+  const [showWarning, setShowWarning] = useState(false);
+  const intervalRef = useRef(null);
+  const navigate = useNavigate();
 
-  // Load recent tasks on component mount
   useEffect(() => {
-    const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-    setRecentTasks(allTasks.slice(0, 5));
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, []);
 
-  // Timer logic
-  useEffect(() => {
-    let intervalId;
-    if (isRunning) {
-      intervalId = setInterval(() => {
-        setTime(prevTime => prevTime + 1);
-      }, 1000);
+  const startTimer = () => {
+    if (!taskName.trim()) {
+      setShowWarning(true);
+      return;
     }
-    return () => clearInterval(intervalId);
-  }, [isRunning]);
-
-  // Notify parent of timer state changes
-  useEffect(() => {
-    onTimerStateChange(isRunning);
-  }, [isRunning, onTimerStateChange]);
-
-  // Format time to HH:MM:SS
-  const formatTime = (seconds) => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    setShowWarning(false);
+    setIsActive(true);
+    intervalRef.current = setInterval(() => {
+      setTime((prevTime) => {
+        if (prevTime <= 1) {
+          clearInterval(intervalRef.current);
+          return 0;
+        }
+        return prevTime - 1;
+      });
+    }, 1000);
   };
 
-  // Play notification sound
-  const playSound = () => {
-    const audio = document.getElementById('notificationSound');
-    if (audio) {
-      audio.currentTime = 0;
-      audio.play().catch(e => console.log('Audio play failed:', e));
-    }
+  const pauseTimer = () => {
+    clearInterval(intervalRef.current);
+    setIsActive(false);
   };
 
-  // Handle starting timer
-  const handleStart = () => {
-    if (task.trim()) {
-      setIsRunning(true);
-      setShowTimer(true);
-      playSound();
-    }
+  const resetTimer = () => {
+    clearInterval(intervalRef.current);
+    setTime(1500);
+    setIsActive(false);
+    setTaskName('');
+    setLeverage('High');
+    setShowWarning(false);
   };
 
-  // Handle ending timer
-  const handleEnd = () => {
-    if (isRunning) {
-      setIsRunning(false);
-      setShowTimer(false);
-      playSound();
-      
-      // Create new task
-      const newTask = {
-        name: task,
-        duration: formatTime(time),
-        timestamp: new Date().toISOString(),
-        leverage: ""
-      };
+  const completeTask = () => {
+    const task = {
+      id: Date.now(),
+      name: taskName,
+      leverage: leverage,
+      duration: 1500 - time,
+      timestamp: new Date().toISOString()
+    };
 
-      // Get existing tasks from localStorage
-      const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-      
-      // Add new task to the beginning
-      const updatedTasks = [newTask, ...allTasks];
-      
-      // Update localStorage with all tasks
-      localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
-      
-      // Update recent tasks state with 5 most recent
-      setRecentTasks(updatedTasks.slice(0, 5));
+    const existingTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
+    localStorage.setItem('allTasks', JSON.stringify([...existingTasks, task]));
 
-      // Reset
-      setTask('');
-      setTime(0);
-    }
+    resetTimer();
+    navigate('/all-tasks');
   };
 
-  // Handle key press for Return key
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && task.trim()) {
-      handleStart();
-    }
+  const formatTime = () => {
+    const minutes = Math.floor(time / 60);
+    const seconds = time % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      {/* Audio element */}
-      <audio id="notificationSound">
-        <source src="https://assets.mixkit.co/active_storage/sfx/2568/2568.wav" type="audio/wav" />
-      </audio>
+    <div className="max-w-4xl mx-auto p-6">
+      <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
+        What will you do next?
+      </h1>
 
-      {isRunning ? (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-12">
-          <div className="text-6xl font-medium text-center">
-            {task}
-          </div>
-          <div className="text-5xl font-mono">
-            {formatTime(time)}
-          </div>
-          <button
-            onClick={handleEnd}
-            className="py-4 px-8 bg-red-500 text-white text-xl rounded-lg hover:bg-red-600"
-          >
-            End Timer
-          </button>
-        </div>
-      ) : (
-        <div>
-          {showTimer && (
-            <div className="text-center mb-8">
-              <div className="text-6xl font-mono mb-4">
-                {formatTime(time)}
-              </div>
-            </div>
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="mb-6">
+          <input
+            type="text"
+            value={taskName}
+            onChange={(e) => setTaskName(e.target.value)}
+            placeholder="Enter task name"
+            className="w-full p-2 border rounded focus:outline-none focus:border-blue-500"
+            disabled={isActive}
+          />
+          {showWarning && (
+            <p className="text-red-500 text-sm mt-1">Please enter a task name</p>
           )}
-          <div className="space-y-4">
-            <input
-              type="text"
-              value={task}
-              onChange={(e) => setTask(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Enter your task..."
-              className="w-full p-3 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-            <button
-              onClick={handleStart}
-              disabled={!task.trim()}
-              className="w-full py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
-            >
-              Start Timer
-            </button>
-          </div>
-
-          {/* Recent Tasks Section */}
-          <div className="mt-8">
-            <h2 className="text-lg font-medium mb-4">Recent Tasks</h2>
-            <div className="space-y-2">
-              {recentTasks.map((recentTask, index) => (
-                <div key={index} className="p-3 bg-white rounded-lg shadow">
-                  <div className="flex justify-between items-center">
-                    <span>{recentTask.name}</span>
-                    <span className="text-gray-500">{recentTask.duration}</span>
-                  </div>
-                </div>
-              ))}
-              {recentTasks.length === 0 && (
-                <div className="text-gray-500 text-center py-4">
-                  No recent tasks
-                </div>
-              )}
-            </div>
-          </div>
         </div>
-      )}
+
+        <div className="mb-6">
+          <select
+            value={leverage}
+            onChange={(e) => setLeverage(e.target.value)}
+            className="w-full p-2 border rounded focus:outline-none focus:border-blue-500"
+            disabled={isActive}
+          >
+            <option value="High">High Leverage</option>
+            <option value="Medium">Medium Leverage</option>
+            <option value="Low">Low Leverage</option>
+          </select>
+        </div>
+
+        <div className="text-6xl text-center mb-6 font-mono">
+          {formatTime()}
+        </div>
+
+        <div className="flex justify-center space-x-4">
+          {!isActive ? (
+            <button
+              onClick={startTimer}
+              className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600"
+            >
+              Start
+            </button>
+          ) : (
+            <button
+              onClick={pauseTimer}
+              className="bg-yellow-500 text-white px-6 py-2 rounded hover:bg-yellow-600"
+            >
+              Pause
+            </button>
+          )}
+          <button
+            onClick={resetTimer}
+            className="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600"
+          >
+            Reset
+          </button>
+          {time === 0 && (
+            <button
+              onClick={completeTask}
+              className="bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600"
+            >
+              Complete
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
