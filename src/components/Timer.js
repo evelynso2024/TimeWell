@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 function Timer() {
   const [isTimerActive, setIsTimerActive] = useState(false);
@@ -7,13 +7,17 @@ function Timer() {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [recentTasks, setRecentTasks] = useState([]);
 
-  // Load recent tasks
+  // Create audio element
+  const playButtonSound = useCallback(() => {
+    const audio = new Audio('https://www.soundjay.com/button/button-09.mp3');
+    audio.play().catch(e => console.log('Audio play failed:', e));
+  }, []);
+
   useEffect(() => {
     const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
     setRecentTasks(allTasks.slice(-5).reverse());
   }, []);
 
-  // Timer effect
   useEffect(() => {
     let intervalId;
     if (isTimerActive) {
@@ -27,11 +31,14 @@ function Timer() {
   const startTimer = (e) => {
     e.preventDefault();
     if (!task.trim()) return;
+    
+    playButtonSound();
     setIsTimerActive(true);
     setStartTime(Date.now());
   };
 
   const endTimer = () => {
+    playButtonSound();
     setIsTimerActive(false);
     
     const newTask = {
