@@ -7,7 +7,6 @@ function Timer() {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [recentTasks, setRecentTasks] = useState([]);
 
-  // Create audio element
   const playButtonSound = useCallback(() => {
     const audio = new Audio('https://www.soundjay.com/button/button-09.mp3');
     audio.play().catch(e => console.log('Audio play failed:', e));
@@ -74,17 +73,24 @@ function Timer() {
 
           <div className="bg-white rounded-lg shadow p-6">
             <form onSubmit={startTimer} className="mb-6">
-              <input
-                type="text"
-                value={task}
-                onChange={(e) => setTask(e.target.value)}
-                placeholder="Enter task name"
-                className="w-full p-2 mb-4 border rounded focus:outline-none focus:border-blue-500"
-              />
+              <div className="flex justify-center mb-4">
+                <input
+                  type="text"
+                  value={task}
+                  onChange={(e) => setTask(e.target.value)}
+                  placeholder="Enter task name"
+                  className="w-4/5 p-2 border rounded focus:outline-none focus:border-blue-500"
+                />
+              </div>
               <div className="flex justify-center">
                 <button
                   type="submit"
-                  className="w-1/3 bg-blue-500 text-white px-8 py-3 rounded hover:bg-blue-600"
+                  disabled={!task.trim()}
+                  className={`w-1/3 px-8 py-3 rounded ${
+                    task.trim() 
+                      ? 'bg-blue-500 text-white hover:bg-blue-600' 
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
                 >
                   Start Timer
                 </button>
