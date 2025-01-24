@@ -6,12 +6,16 @@ function AllTasks() {
   const [endDate, setEndDate] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const datePickerRef = useRef(null);
-  const [tasks, setTasks] = useState([]);
+  const [allTasks, setAllTasks] = useState([]); // Store all tasks
+  const [filteredTasks, setFilteredTasks] = useState([]); // Store filtered tasks
+  const [searchTerm, setSearchTerm] = useState('');
+  const [leverageFilter, setLeverageFilter] = useState('all');
 
   // Load all tasks on component mount
   useEffect(() => {
-    const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-    setTasks(allTasks);
+    const tasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
+    setAllTasks(tasks);
+    setFilteredTasks(tasks);
   }, []);
 
   // Handle clicking outside of date picker
@@ -28,17 +32,63 @@ function AllTasks() {
     };
   }, [datePickerRef]);
 
+  // Filter tasks based on all criteria
+  useEffect(() => {
+    let filtered = [...allTasks];
+
+    // Date filter
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59); // Include the entire end day
+      filtered = filtered.filter(task => {
+        const taskDate = new Date(task.timestamp);
+        return taskDate >= start && taskDate <= end;
+      });
+    } else {
+      // Preset date ranges
+      const now = new Date();
+      const hours = {
+        '24h': 24,
+        '7d': 24 * 7,
+        '30d': 24 * 30
+      }[dateRange] || 24;
+
+      const cutoff = new Date(now - hours * 60 * 60 * 1000);
+      filtered = filtered.filter(task => new Date(task.timestamp) >= cutoff);
+    }
+
+    // Search term filter
+    if (searchTerm) {
+      filtered = filtered.filter(task =>
+        task.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Leverage filter
+    if (leverageFilter !== 'all') {
+      filtered = filtered.filter(task => task.leverage === leverageFilter);
+    }
+
+    setFilteredTasks(filtered);
+  }, [allTasks, dateRange, startDate, endDate, searchTerm, leverageFilter]);
+
   const handleLeverageChange = (index, value) => {
-    const updatedTasks = [...tasks];
-    updatedTasks[index] = { ...updatedTasks[index], leverage: value };
-    setTasks(updatedTasks);
+    const taskToUpdate = filteredTasks[index];
+    const allTasksIndex = allTasks.findIndex(t => t.timestamp === taskToUpdate.timestamp);
+    
+    // Update both arrays
+    const updatedAllTasks = [...allTasks];
+    updatedAllTasks[allTasksIndex] = { ...taskToUpdate, leverage: value };
+    setAllTasks(updatedAllTasks);
     
     // Update localStorage
-    localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
+    localStorage.setItem('allTasks', JSON.stringify(updatedAllTasks));
   };
 
   const handleDateRangeSelect = () => {
     if (startDate && endDate) {
+      setDateRange('custom');
       setShowDatePicker(false);
     }
   };
@@ -46,67 +96,95 @@ function AllTasks() {
   return (
     <div className="max-w-4xl mx-auto">
       {/* Controls */}
-      <div className="flex items-center gap-4 mb-6">
-        <select
-          value={dateRange}
-          onChange={(e) => setDateRange(e.target.value)}
-          className="p-2 border rounded-lg"
-        >
-          <option value="24h">Last 24 Hours</option>
-          <option value="7d">Last 7 Days</option>
-          <option value="30d">Last 30 Days</option>
-        </select>
+      <div className="space-y-4 mb-6">
+        {/* First Row: Date Controls */}
+        <div className="flex items-center gap-4">
+          <select
+            value={dateRange}
+            onChange={(e) => {
+              setDateRange(e.target.value);
+              setStartDate('');
+              setEndDate('');
+            }}
+            className="p-2 border rounded-lg"
+          >
+            <option value="24h">Last 24 Hours</option>
+            <option value="7d">Last 7 Days</option>
+            <option value="30d">Last 30 Days</option>
+            {startDate && endDate && <option value="custom">Custom Range</option>}
+          </select>
 
-        <button
-          onClick={() => setShowDatePicker(!showDatePicker)}
-          className="p-2 text-gray-600 hover:text-gray-800"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-        </button>
+          <button
+            onClick={() => setShowDatePicker(!showDatePicker)}
+            className="p-2 text-gray-600 hover:text-gray-800"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </button>
 
-        {/* Custom Date Range Picker */}
-        {showDatePicker && (
-          <div ref={datePickerRef} className="absolute mt-2 p-4 bg-white rounded-lg shadow-lg border z-10">
-            <div className="space-y-3">
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">From</label>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="p-2 border rounded-lg w-full"
-                />
+          {showDatePicker && (
+            <div ref={datePickerRef} className="absolute mt-2 p-4 bg-white rounded-lg shadow-lg border z-10">
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">From</label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="p-2 border rounded-lg w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">To</label>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="p-2 border rounded-lg w-full"
+                  />
+                </div>
+                <button
+                  onClick={handleDateRangeSelect}
+                  className="w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                >
+                  Apply
+                </button>
               </div>
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">To</label>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="p-2 border rounded-lg w-full"
-                />
-              </div>
-              <button
-                onClick={handleDateRangeSelect}
-                className="w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-              >
-                Apply
-              </button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+
+        {/* Second Row: Search and Leverage Filter */}
+        <div className="flex gap-4">
+          <input
+            type="text"
+            placeholder="Search tasks..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="flex-1 p-2 border rounded-lg"
+          />
+          <select
+            value={leverageFilter}
+            onChange={(e) => setLeverageFilter(e.target.value)}
+            className="p-2 border rounded-lg"
+          >
+            <option value="all">All Rankings</option>
+            <option value="high">High Leverage</option>
+            <option value="medium">Medium Leverage</option>
+            <option value="low">Low Leverage</option>
+          </select>
+        </div>
       </div>
 
       {/* Tasks List */}
       <div className="space-y-3">
-        {tasks.length === 0 ? (
+        {filteredTasks.length === 0 ? (
           <div className="text-gray-500 text-center py-8">
-            No tasks recorded yet
+            No tasks found
           </div>
         ) : (
-          tasks.map((task, index) => (
+          filteredTasks.map((task, index) => (
             <div key={index} className="p-4 bg-white rounded-lg shadow">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
