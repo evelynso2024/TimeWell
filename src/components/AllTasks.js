@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 function AllTasks() {
   const [dateRange, setDateRange] = useState('24h');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const datePickerRef = useRef(null);
   const [tasks, setTasks] = useState([
     {
       name: "Sample Task 1",
@@ -19,6 +20,20 @@ function AllTasks() {
       leverage: ""
     }
   ]);
+
+  // Handle clicking outside of date picker
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (datePickerRef.current && !datePickerRef.current.contains(event.target)) {
+        setShowDatePicker(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [datePickerRef]);
 
   const handleLeverageChange = (index, value) => {
     const updatedTasks = [...tasks];
@@ -58,7 +73,7 @@ function AllTasks() {
 
         {/* Custom Date Range Picker */}
         {showDatePicker && (
-          <div className="absolute mt-2 p-4 bg-white rounded-lg shadow-lg border z-10">
+          <div ref={datePickerRef} className="absolute mt-2 p-4 bg-white rounded-lg shadow-lg border z-10">
             <div className="space-y-3">
               <div>
                 <label className="block text-sm text-gray-600 mb-1">From</label>
