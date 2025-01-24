@@ -6,6 +6,10 @@ function Timer() {
   const [time, setTime] = useState(0);
   const [recentTasks, setRecentTasks] = useState([]);
 
+  // Create Audio objects
+  const startSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568.wav');
+  const endSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568.wav');
+
   // Load recent tasks on component mount
   useEffect(() => {
     const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
@@ -35,6 +39,7 @@ function Timer() {
   const handleStart = () => {
     if (task.trim()) {
       setIsRunning(true);
+      startSound.play().catch(error => console.log('Sound play failed:', error));
     }
   };
 
@@ -42,6 +47,7 @@ function Timer() {
   const handleEnd = () => {
     if (isRunning) {
       setIsRunning(false);
+      endSound.play().catch(error => console.log('Sound play failed:', error));
       
       // Create new task
       const newTask = {
@@ -72,19 +78,13 @@ function Timer() {
   return (
     <div className="max-w-2xl mx-auto p-6">
       {isRunning ? (
-        // Timer Running Mode - Minimal Interface
         <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-12">
-          {/* Current Task Display - Larger and Above Timer */}
           <div className="text-6xl font-medium text-center">
             {task}
           </div>
-
-          {/* Timer Display - Smaller than Task */}
           <div className="text-5xl font-mono">
             {formatTime(time)}
           </div>
-
-          {/* End Timer Button */}
           <button
             onClick={handleEnd}
             className="py-4 px-8 bg-red-500 text-white text-xl rounded-lg hover:bg-red-600"
@@ -93,17 +93,13 @@ function Timer() {
           </button>
         </div>
       ) : (
-        // Timer Stopped Mode - Full Interface
         <div>
-          {/* Timer Display */}
           <div className="text-center mb-8">
             <div className="text-6xl font-mono mb-4">
               {formatTime(time)}
             </div>
           </div>
-
-          {/* Task Input and Start Button */}
-          <div className="space-y-4 mb-8">
+          <div className="space-y-4">
             <input
               type="text"
               value={task}
