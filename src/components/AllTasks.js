@@ -207,6 +207,7 @@ function AllTasks() {
             onChange={(e) => setSortBy(e.target.value)}
             className="p-2 border rounded-lg min-w-[160px]"
           >
+            <option value="" disabled>Sort By</option>
             <optgroup label="Task Name">
               <option value="name-asc">Name (A to Z)</option>
               <option value="name-desc">Name (Z to A)</option>
