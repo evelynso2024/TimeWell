@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 function Timer() {
   const [isTimerActive, setIsTimerActive] = useState(false);
@@ -6,6 +7,7 @@ function Timer() {
   const [startTime, setStartTime] = useState(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [recentTasks, setRecentTasks] = useState([]);
+  const navigate = useNavigate();
 
   // Create audio context on first interaction
   const playClickSound = () => {
@@ -31,6 +33,10 @@ function Timer() {
   }, []);
 
   useEffect(() => {
+    localStorage.setItem('isTimerActive', JSON.stringify(isTimerActive));
+  }, [isTimerActive]);
+
+  useEffect(() => {
     let intervalId;
     if (isTimerActive) {
       intervalId = setInterval(() => {
@@ -40,13 +46,12 @@ function Timer() {
     return () => clearInterval(intervalId);
   }, [isTimerActive, startTime]);
 
-  const startTimer = (e) => {
-    e.preventDefault();
-    if (!task.trim()) return;
-    
-    playClickSound();
-    setIsTimerActive(true);
-    setStartTime(Date.now());
+  const startTimer = () => {
+    if (task.trim()) {
+      playClickSound();
+      setIsTimerActive(true);
+      setStartTime(Date.now());
+    }
   };
 
   const endTimer = () => {
@@ -76,72 +81,52 @@ function Timer() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const formatDuration = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    return `${mins} min${mins !== 1 ? 's' : ''}`;
-  };
-
   const updateTaskLeverage = (taskId, leverage) => {
     const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-    const updatedAllTasks = allTasks.map(task => 
+    const updatedTasks = allTasks.map(task => 
       task.id === taskId ? { ...task, leverage } : task
     );
-    localStorage.setItem('allTasks', JSON.stringify(updatedAllTasks));
-
-    setRecentTasks(prevTasks => 
-      prevTasks.map(task => 
-        task.id === taskId ? { ...task, leverage } : task
-      )
-    );
+    localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
+    setRecentTasks(updatedTasks.slice(-5).reverse());
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-2xl mx-auto p-6">
       {!isTimerActive ? (
         <>
-          <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
-            What will you do next?
-          </h1>
+          <div className="bg-white rounded-lg shadow p-6 mb-6">
+            <input
+              type="text"
+              value={task}
+              onChange={(e) => setTask(e.target.value)}
+              placeholder="What are you working on?"
+              className="w-full p-4 text-xl border rounded mb-4"
+              autoFocus
+            />
+            <button
+              onClick={startTimer}
+              disabled={!task.trim()}
+              className={`w-full p-4 rounded text-white text-xl
+                ${task.trim() ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-300'}`}
+            >
+              Start Timer
+            </button>
+          </div>
 
           <div className="bg-white rounded-lg shadow p-6">
-            <form onSubmit={startTimer} className="mb-6">
-              <div className="flex justify-center mb-4">
-                <input
-                  type="text"
-                  value={task}
-                  onChange={(e) => setTask(e.target.value)}
-                  placeholder="Enter task name"
-                  className="w-4/5 p-2 border rounded focus:outline-none focus:border-blue-500"
-                />
-              </div>
-              <div className="flex justify-center">
-                <button
-                  type="submit"
-                  disabled={!task.trim()}
-                  className={`w-1/3 px-8 py-3 rounded ${
-                    task.trim() 
-                      ? 'bg-blue-500 text-white hover:bg-blue-600' 
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  }`}
-                >
-                  Start Timer
-                </button>
-              </div>
-            </form>
-
-            <div className="mt-8">
-              <h2 className="text-lg font-semibold mb-4">Recent tasks</h2>
+            <h2 className="text-xl font-semibold mb-4">Recent Tasks</h2>
+            <div className="space-y-4">
               <ul className="space-y-3">
                 {recentTasks.map((task) => (
                   <li 
-                    key={task.id} 
+                    key={task.id}
                     className="flex items-center justify-between p-3 bg-gray-50 rounded"
                   >
-                    <div className="flex-1">
-                      <span className="text-gray-800">{task.name}</span>
-                      <span className="text-gray-500 text-sm ml-2">
-                        {formatDuration(task.duration)}
-                      </span>
+                    <div>
+                      <div className="font-medium">{task.name}</div>
+                      <div className="text-sm text-gray-500">
+                        {formatTime(task.duration)}
+                      </div>
                     </div>
                     <select
                       value={task.leverage || ''}
