@@ -1,344 +1,159 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 
 function AllTasks() {
-  const [dateRange, setDateRange] = useState('24h');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const datePickerRef = useRef(null);
-  const [allTasks, setAllTasks] = useState([]);
-  const [filteredTasks, setFilteredTasks] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [leverageFilter, setLeverageFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('');
-  const [selectedTasks, setSelectedTasks] = useState(new Set());
-  const [selectAll, setSelectAll] = useState(false);
+  const [tasks, setTasks] = useState([]);
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTask, setEditedTask] = useState({ name: '', leverage: '', duration: '' });
 
-  // Convert duration string (HH:MM:SS) to seconds for sorting
-  const durationToSeconds = (duration) => {
-    const [hours, minutes, seconds] = duration.split(':').map(Number);
-    return hours * 3600 + minutes * 60 + seconds;
-  };
-
-  // Load all tasks and apply default 24h filter on component mount
   useEffect(() => {
-    const tasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-    setAllTasks(tasks);
-    
-    // Apply default 24h filter
-    const now = new Date();
-    const cutoff = new Date(now - 24 * 60 * 60 * 1000);
-    const filtered = tasks.filter(task => new Date(task.timestamp) >= cutoff);
-    setFilteredTasks(filtered);
+    const storedTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
+    setTasks(storedTasks);
   }, []);
 
-  // Handle clicking outside of date picker
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (datePickerRef.current && !datePickerRef.current.contains(event.target)) {
-        setShowDatePicker(false);
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [datePickerRef]);
-
-  // Filter and sort tasks based on all criteria
-  useEffect(() => {
-    let filtered = [...allTasks];
-
-    // Date filter
-    if (startDate && endDate) {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59);
-      filtered = filtered.filter(task => {
-        const taskDate = new Date(task.timestamp);
-        return taskDate >= start && taskDate <= end;
-      });
-    } else {
-      const now = new Date();
-      const hours = {
-        '24h': 24,
-        '7d': 24 * 7,
-        '30d': 24 * 30
-      }[dateRange] || 24;
-
-      const cutoff = new Date(now - hours * 60 * 60 * 1000);
-      filtered = filtered.filter(task => new Date(task.timestamp) >= cutoff);
-    }
-
-    // Search term filter
-    if (searchTerm) {
-      filtered = filtered.filter(task =>
-        task.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Leverage filter
-    if (leverageFilter !== 'all') {
-      filtered = filtered.filter(task => task.leverage === leverageFilter);
-    }
-
-    // Sort tasks
-    if (sortBy) {
-      switch (sortBy) {
-        case 'name-asc':
-          filtered.sort((a, b) => a.name.localeCompare(b.name));
-          break;
-        case 'name-desc':
-          filtered.sort((a, b) => b.name.localeCompare(a.name));
-          break;
-        case 'date-newest':
-          filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-          break;
-        case 'date-oldest':
-          filtered.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-          break;
-        case 'duration-longest':
-          filtered.sort((a, b) => durationToSeconds(b.duration) - durationToSeconds(a.duration));
-          break;
-        case 'duration-shortest':
-          filtered.sort((a, b) => durationToSeconds(a.duration) - durationToSeconds(b.duration));
-          break;
-        default:
-          break;
-      }
-    }
-
-    setFilteredTasks(filtered);
-  }, [allTasks, dateRange, startDate, endDate, searchTerm, leverageFilter, sortBy]);
-
-  const handleLeverageChange = (index, value) => {
-    const taskToUpdate = filteredTasks[index];
-    const allTasksIndex = allTasks.findIndex(t => t.timestamp === taskToUpdate.timestamp);
-    
-    const updatedAllTasks = [...allTasks];
-    updatedAllTasks[allTasksIndex] = { ...taskToUpdate, leverage: value };
-    setAllTasks(updatedAllTasks);
-    
-    localStorage.setItem('allTasks', JSON.stringify(updatedAllTasks));
+  const handleEdit = (task) => {
+    setSelectedTask(task);
+    setEditedTask(task);
+    setIsEditing(true);
   };
 
-  const handleDateRangeSelect = () => {
-    if (startDate && endDate) {
-      setDateRange('custom');
-      setShowDatePicker(false);
+  const handleDelete = (taskToDelete) => {
+    const updatedTasks = tasks.filter(task => task.id !== taskToDelete.id);
+    setTasks(updatedTasks);
+    localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
+    if (selectedTask && selectedTask.id === taskToDelete.id) {
+      setSelectedTask(null);
+      setIsEditing(false);
     }
   };
 
-  const handleTaskSelect = (timestamp) => {
-    const newSelected = new Set(selectedTasks);
-    if (newSelected.has(timestamp)) {
-      newSelected.delete(timestamp);
-    } else {
-      newSelected.add(timestamp);
-    }
-    setSelectedTasks(newSelected);
+  const handleSaveEdit = () => {
+    const updatedTasks = tasks.map(task =>
+      task.id === selectedTask.id ? { ...editedTask, id: task.id } : task
+    );
+    setTasks(updatedTasks);
+    localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
+    setIsEditing(false);
+    setSelectedTask(null);
   };
 
-  const handleSelectAll = () => {
-    if (selectAll) {
-      setSelectedTasks(new Set());
-    } else {
-      setSelectedTasks(new Set(filteredTasks.map(task => task.timestamp)));
-    }
-    setSelectAll(!selectAll);
+  const formatDuration = (duration) => {
+    const minutes = Math.floor(duration / 60);
+    const seconds = duration % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  const handleDeleteSelected = () => {
-    if (window.confirm('Are you sure you want to delete the selected tasks?')) {
-      const updatedTasks = allTasks.filter(task => !selectedTasks.has(task.timestamp));
-      setAllTasks(updatedTasks);
-      localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
-      setSelectedTasks(new Set());
-      setSelectAll(false);
-    }
+  const formatTimestamp = (timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleString();
   };
 
-  const handleDeleteTask = (timestamp) => {
-    if (window.confirm('Are you sure you want to delete this task?')) {
-      const updatedTasks = allTasks.filter(task => task.timestamp !== timestamp);
-      setAllTasks(updatedTasks);
-      localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
+  const getLeverageColor = (leverage) => {
+    switch (leverage.toLowerCase()) {
+      case 'high':
+        return 'text-green-600';
+      case 'medium':
+        return 'text-yellow-500';
+      case 'low':
+        return 'text-red-600';
+      default:
+        return 'text-gray-600';
     }
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      {/* Controls */}
-      <div className="space-y-4 mb-6">
-        {/* First Row: Date Controls */}
-        <div className="flex items-center gap-4">
-          <select
-            value={dateRange}
-            onChange={(e) => {
-              setDateRange(e.target.value);
-              setStartDate('');
-              setEndDate('');
-            }}
-            className="p-2 border rounded-lg"
-          >
-            <option value="24h">Last 24 Hours</option>
-            <option value="7d">Last 7 Days</option>
-            <option value="30d">Last 30 Days</option>
-            {startDate && endDate && <option value="custom">Custom Range</option>}
-          </select>
+    <div className="container mx-auto p-6">
+      <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
+        What You've Done
+      </h1>
 
-          <button
-            onClick={() => setShowDatePicker(!showDatePicker)}
-            className="p-2 text-gray-600 hover:text-gray-800"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </button>
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="overflow-x-auto">
+          <table className="min-w-full table-auto">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="px-4 py-2 text-left">Task Name</th>
+                <th className="px-4 py-2 text-left">Leverage</th>
+                <th className="px-4 py-2 text-left">Duration</th>
+                <th className="px-4 py-2 text-left">Timestamp</th>
+                <th className="px-4 py-2 text-left">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tasks.map((task) => (
+                <tr key={task.id} className="border-b hover:bg-gray-50">
+                  <td className="px-4 py-2">{task.name}</td>
+                  <td className={`px-4 py-2 ${getLeverageColor(task.leverage)}`}>
+                    {task.leverage}
+                  </td>
+                  <td className="px-4 py-2">{formatDuration(task.duration)}</td>
+                  <td className="px-4 py-2">{formatTimestamp(task.timestamp)}</td>
+                  <td className="px-4 py-2">
+                    <button
+                      onClick={() => handleEdit(task)}
+                      className="text-blue-600 hover:text-blue-800 mr-2"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(task)}
+                      className="text-red-600 hover:text-red-800"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-          {showDatePicker && (
-            <div ref={datePickerRef} className="absolute mt-2 p-4 bg-white rounded-lg shadow-lg border">
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm text-gray-600 mb-1">From</label>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="p-2 border rounded-lg w-full"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-600 mb-1">To</label>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="p-2 border rounded-lg w-full"
-                  />
-                </div>
-                <button
-                  onClick={handleDateRangeSelect}
-                  className="w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+        {/* Edit Modal */}
+        {isEditing && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div className="bg-white p-6 rounded-lg w-96">
+              <h2 className="text-xl font-bold mb-4">Edit Task</h2>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2">
+                  Task Name
+                </label>
+                <input
+                  type="text"
+                  value={editedTask.name}
+                  onChange={(e) => setEditedTask({ ...editedTask, name: e.target.value })}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 text-sm font-bold mb-2">
+                  Leverage
+                </label>
+                <select
+                  value={editedTask.leverage}
+                  onChange={(e) => setEditedTask({ ...editedTask, leverage: e.target.value })}
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 >
-                  Apply
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
+              </div>
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mr-2"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveEdit}
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                >
+                  Save
                 </button>
               </div>
             </div>
-          )}
-        </div>
-
-        {/* Second Row: Search, Leverage Filter, and Sort */}
-        <div className="flex gap-4">
-          <input
-            type="text"
-            placeholder="Search tasks..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1 p-2 border rounded-lg"
-          />
-          <select
-            value={leverageFilter}
-            onChange={(e) => setLeverageFilter(e.target.value)}
-            className="p-2 border rounded-lg"
-          >
-            <option value="all">All Rankings</option>
-            <option value="high">High Leverage</option>
-            <option value="medium">Medium Leverage</option>
-            <option value="low">Low Leverage</option>
-          </select>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="p-2 border rounded-lg min-w-[160px]"
-          >
-            <option value="" disabled>Sort By</option>
-            <optgroup label="Task Name">
-              <option value="name-asc">Name (A to Z)</option>
-              <option value="name-desc">Name (Z to A)</option>
-            </optgroup>
-            <optgroup label="Date">
-              <option value="date-newest">Newest First</option>
-              <option value="date-oldest">Oldest First</option>
-            </optgroup>
-            <optgroup label="Duration">
-              <option value="duration-longest">Longest First</option>
-              <option value="duration-shortest">Shortest First</option>
-            </optgroup>
-          </select>
-        </div>
-
-        {/* Bulk Actions */}
-        {filteredTasks.length > 0 && (
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={selectAll}
-                onChange={handleSelectAll}
-                className="h-4 w-4"
-              />
-              <span className="text-sm text-gray-600">Select All</span>
-            </div>
-            {selectedTasks.size > 0 && (
-              <button
-                onClick={handleDeleteSelected}
-                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-              >
-                Delete Selected ({selectedTasks.size})
-              </button>
-            )}
           </div>
-        )}
-      </div>
-
-      {/* Tasks List */}
-      <div className="space-y-3">
-        {filteredTasks.length === 0 ? (
-          <div className="text-gray-500 text-center py-8">
-            No tasks found
-          </div>
-        ) : (
-          filteredTasks.map((task, index) => (
-            <div key={index} className="p-4 bg-white rounded-lg shadow">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 flex-1">
-                  <input
-                    type="checkbox"
-                    checked={selectedTasks.has(task.timestamp)}
-                    onChange={() => handleTaskSelect(task.timestamp)}
-                    className="h-4 w-4"
-                  />
-                  <div>
-                    <h3 className="font-medium">{task.name}</h3>
-                    <p className="text-sm text-gray-500">
-                      {new Date(task.timestamp).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <span className="font-mono">{task.duration}</span>
-                  <select
-                    value={task.leverage}
-                    onChange={(e) => handleLeverageChange(index, e.target.value)}
-                    className="p-2 border rounded-lg bg-gray-50"
-                  >
-                    <option value="">Rank</option>
-                    <option value="high">High Leverage</option>
-                    <option value="medium">Medium Leverage</option>
-                    <option value="low">Low Leverage</option>
-                  </select>
-                  <button
-                    onClick={() => handleDeleteTask(task.timestamp)}
-                    className="text-red-500 hover:text-red-600"
-                  >
-                    ×
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))
         )}
       </div>
     </div>
