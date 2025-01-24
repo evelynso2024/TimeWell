@@ -1,38 +1,64 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import timerSound from '../sounds/timer-sound.mp3'; // Make sure this file exists in your project
 
 function Timer() {
-  const [timeLeft, setTimeLeft] = useState(25 * 60);
-  const [isRunning, setIsRunning] = useState(false);
+  const [isTimerActive, setIsTimerActive] = useState(false);
   const [task, setTask] = useState('');
+  const [startTime, setStartTime] = useState(null);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [recentTasks, setRecentTasks] = useState([]);
   const navigate = useNavigate();
+  const audio = new Audio(timerSound);
 
+  // Load recent tasks
   useEffect(() => {
-    let timer;
-    if (isRunning && timeLeft > 0) {
-      timer = setInterval(() => {
-        setTimeLeft(timeLeft - 1);
-      }, 1000);
-    } else if (timeLeft === 0) {
-      setIsRunning(false);
-      const newTask = {
-        id: Date.now(),
-        name: task,
-        duration: 25 * 60,
-        timestamp: new Date().toISOString(),
-        leverage: 'High'
-      };
-      const existingTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-      localStorage.setItem('allTasks', JSON.stringify([...existingTasks, newTask]));
-      navigate('/all-tasks');
-    }
-    return () => clearInterval(timer);
-  }, [isRunning, timeLeft, task, navigate]);
+    const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
+    setRecentTasks(allTasks.slice(-5).reverse()); // Get last 5 tasks, most recent first
+  }, []);
 
-  const startTimer = () => {
-    if (task.trim()) {
-      setIsRunning(true);
+  // Handle timer
+  useEffect(() => {
+    let intervalId;
+    if (isTimerActive) {
+      intervalId = setInterval(() => {
+        setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
+      }, 1000);
     }
+    return () => clearInterval(intervalId);
+  }, [isTimerActive, startTime]);
+
+  const startTimer = (e) => {
+    e.preventDefault(); // Prevent form submission
+    if (!task.trim()) return;
+    
+    audio.play();
+    setIsTimerActive(true);
+    setStartTime(Date.now());
+  };
+
+  const endTimer = () => {
+    audio.play();
+    setIsTimerActive(false);
+    
+    const newTask = {
+      id: Date.now(),
+      name: task,
+      duration: elapsedTime,
+      timestamp: new Date().toISOString(),
+      leverage: 'High'
+    };
+
+    const existingTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
+    localStorage.setItem('allTasks', JSON.stringify([...existingTasks, newTask]));
+    
+    // Reset states
+    setTask('');
+    setElapsedTime(0);
+    setStartTime(null);
+    
+    // Update recent tasks
+    setRecentTasks([newTask, ...recentTasks.slice(0, 4)]);
   };
 
   const formatTime = (seconds) => {
@@ -41,40 +67,63 @@ function Timer() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      startTimer();
-    }
-  };
-
   return (
-    <div className="container mx-auto p-4 max-w-md">
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <div className="text-6xl text-center mb-8 font-mono">
-          {formatTime(timeLeft)}
-        </div>
-        <input
-          type="text"
-          value={task}
-          onChange={(e) => setTask(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="What are you working on?"
-          className="w-full p-2 mb-4 border rounded"
-          disabled={isRunning}
-        />
-        {!isRunning ? (
-          <button
-            onClick={startTimer}
-            className="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Start
-          </button>
-        ) : (
-          <div className="text-center text-gray-600">
-            Focus on your task...
+    <div className="max-w-4xl mx-auto p-6">
+      <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">
+        What will you do next?
+      </h1>
+
+      {!isTimerActive ? (
+        <div className="bg-white rounded-lg shadow p-6">
+          <form onSubmit={startTimer} className="mb-6">
+            <div className="flex gap-4">
+              <input
+                type="text"
+                value={task}
+                onChange={(e) => setTask(e.target.value)}
+                placeholder="Enter task name"
+                className="flex-1 p-2 border rounded focus:outline-none focus:border-blue-500"
+              />
+              <button
+                type="submit"
+                className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600"
+              >
+                Start Timer
+              </button>
+            </div>
+          </form>
+
+          {/* Recent Tasks */}
+          <div className="mt-8">
+            <h2 className="text-lg font-semibold mb-4">Recent tasks</h2>
+            <ul className="space-y-2">
+              {recentTasks.map((task) => (
+                <li 
+                  key={task.id} 
+                  className="text-gray-600 hover:text-gray-800"
+                >
+                  {task.name}
+                </li>
+              ))}
+            </ul>
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg shadow p-6 text-center">
+          <div className="text-4xl font-bold mb-4 text-gray-800">
+            {task}
+          </div>
+          <div className="text-3xl font-mono mb-6 text-gray-600">
+            {formatTime(elapsedTime)}
+          </div>
+          <button
+            onClick={endTimer}
+            className="bg-red-500 text-white px-8 py-3 rounded hover:bg-red-600"
+          >
+            End Timer
+          </button>
+        </div>
+      )}
     </div>
   );
 }
