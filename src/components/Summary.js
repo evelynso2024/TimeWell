@@ -1,207 +1,116 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Bar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
+
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 function Summary() {
-  const [tasks, setTasks] = useState([]);
-  const [leverageStats, setLeverageStats] = useState({
-    high: { count: 0, time: '00:00:00', tasks: [] },
-    medium: { count: 0, time: '00:00:00', tasks: [] },
-    low: { count: 0, time: '00:00:00', tasks: [] },
-    unranked: { count: 0, time: '00:00:00', tasks: [] }
+  const [leverageData, setLeverageData] = useState({
+    high: 0,
+    medium: 0,
+    low: 0
   });
-  const [showModal, setShowModal] = useState(false);
-  const [selectedTasks, setSelectedTasks] = useState([]);
-  const [modalTitle, setModalTitle] = useState('');
 
-  // Convert HH:MM:SS to seconds
-  const timeToSeconds = (timeStr) => {
-    const [hours, minutes, seconds] = timeStr.split(':').map(Number);
-    return hours * 3600 + minutes * 60 + seconds;
-  };
-
-  // Convert seconds to HH:MM:SS
-  const secondsToTime = (seconds) => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  // Calculate statistics
   useEffect(() => {
+    // Get tasks from localStorage
     const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-    setTasks(allTasks);
+    
+    // Count tasks by leverage
+    const counts = allTasks.reduce((acc, task) => {
+      const leverage = task.leverage.toLowerCase();
+      if (leverage === 'high') acc.high++;
+      else if (leverage === 'medium') acc.medium++;
+      else if (leverage === 'low') acc.low++;
+      return acc;
+    }, { high: 0, medium: 0, low: 0 });
 
-    // Calculate leverage statistics
-    const stats = {
-      high: { count: 0, seconds: 0, tasks: [] },
-      medium: { count: 0, seconds: 0, tasks: [] },
-      low: { count: 0, seconds: 0, tasks: [] },
-      unranked: { count: 0, seconds: 0, tasks: [] }
-    };
-
-    allTasks.forEach(task => {
-      const category = task.leverage || 'unranked';
-      stats[category].count += 1;
-      stats[category].seconds += timeToSeconds(task.duration);
-      stats[category].tasks.push(task);
-    });
-
-    // Convert seconds back to HH:MM:SS for display
-    setLeverageStats({
-      high: { 
-        count: stats.high.count, 
-        time: secondsToTime(stats.high.seconds),
-        tasks: stats.high.tasks
-      },
-      medium: { 
-        count: stats.medium.count, 
-        time: secondsToTime(stats.medium.seconds),
-        tasks: stats.medium.tasks
-      },
-      low: { 
-        count: stats.low.count, 
-        time: secondsToTime(stats.low.seconds),
-        tasks: stats.low.tasks
-      },
-      unranked: { 
-        count: stats.unranked.count, 
-        time: secondsToTime(stats.unranked.seconds),
-        tasks: stats.unranked.tasks
-      }
-    });
+    setLeverageData(counts);
   }, []);
 
-  const handleTasksClick = (category, tasks) => {
-    setSelectedTasks(tasks);
-    setModalTitle(`${category.charAt(0).toUpperCase() + category.slice(1)} Leverage Tasks`);
-    setShowModal(true);
+  // Chart configuration
+  const chartData = {
+    labels: ['High Leverage', 'Medium Leverage', 'Low Leverage'],
+    datasets: [
+      {
+        label: 'Number of Tasks',
+        data: [leverageData.high, leverageData.medium, leverageData.low],
+        backgroundColor: [
+          'rgba(75, 192, 192, 0.6)', // Green for high
+          'rgba(54, 162, 235, 0.6)', // Blue for medium
+          'rgba(255, 99, 132, 0.6)',  // Red for low
+        ],
+        borderColor: [
+          'rgba(75, 192, 192, 1)',
+          'rgba(54, 162, 235, 1)',
+          'rgba(255, 99, 132, 1)',
+        ],
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  const options = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      title: {
+        display: true,
+        text: 'Task Distribution by Leverage',
+        font: {
+          size: 16
+        }
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          stepSize: 1
+        }
+      }
+    }
   };
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      {/* Leverage Breakdown */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-2xl font-bold mb-4">Leverage Breakdown</h2>
-        <div className="space-y-6">
-          {/* High Leverage */}
-          <div className="border-l-4 border-green-500 pl-4">
-            <h3 className="text-lg font-semibold mb-2">High Leverage</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <button 
-                  onClick={() => handleTasksClick('high', leverageStats.high.tasks)}
-                  className="text-gray-600 hover:text-blue-500"
-                >
-                  Tasks
-                </button>
-                <p className="text-2xl font-bold">{leverageStats.high.count}</p>
-              </div>
-              <div>
-                <p className="text-gray-600">Time</p>
-                <p className="text-2xl font-bold font-mono">{leverageStats.high.time}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Medium Leverage */}
-          <div className="border-l-4 border-yellow-500 pl-4">
-            <h3 className="text-lg font-semibold mb-2">Medium Leverage</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <button 
-                  onClick={() => handleTasksClick('medium', leverageStats.medium.tasks)}
-                  className="text-gray-600 hover:text-blue-500"
-                >
-                  Tasks
-                </button>
-                <p className="text-2xl font-bold">{leverageStats.medium.count}</p>
-              </div>
-              <div>
-                <p className="text-gray-600">Time</p>
-                <p className="text-2xl font-bold font-mono">{leverageStats.medium.time}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Low Leverage */}
-          <div className="border-l-4 border-red-500 pl-4">
-            <h3 className="text-lg font-semibold mb-2">Low Leverage</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <button 
-                  onClick={() => handleTasksClick('low', leverageStats.low.tasks)}
-                  className="text-gray-600 hover:text-blue-500"
-                >
-                  Tasks
-                </button>
-                <p className="text-2xl font-bold">{leverageStats.low.count}</p>
-              </div>
-              <div>
-                <p className="text-gray-600">Time</p>
-                <p className="text-2xl font-bold font-mono">{leverageStats.low.time}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Unranked */}
-          <div className="border-l-4 border-gray-300 pl-4">
-            <h3 className="text-lg font-semibold mb-2">Unranked</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <button 
-                  onClick={() => handleTasksClick('unranked', leverageStats.unranked.tasks)}
-                  className="text-gray-600 hover:text-blue-500"
-                >
-                  Tasks
-                </button>
-                <p className="text-2xl font-bold">{leverageStats.unranked.count}</p>
-              </div>
-              <div>
-                <p className="text-gray-600">Time</p>
-                <p className="text-2xl font-bold font-mono">{leverageStats.unranked.time}</p>
-              </div>
-            </div>
-          </div>
+      <h1 className="text-2xl font-bold mb-6 text-center">Task Summary</h1>
+      <div className="bg-white p-6 rounded-lg shadow">
+        <Bar data={chartData} options={options} />
+      </div>
+      
+      {/* Summary Statistics */}
+      <div className="grid grid-cols-3 gap-4 mt-6">
+        <div className="bg-white p-4 rounded-lg shadow text-center">
+          <h3 className="font-semibold text-green-600">High Leverage</h3>
+          <p className="text-2xl mt-2">{leverageData.high}</p>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow text-center">
+          <h3 className="font-semibold text-blue-600">Medium Leverage</h3>
+          <p className="text-2xl mt-2">{leverageData.medium}</p>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow text-center">
+          <h3 className="font-semibold text-red-600">Low Leverage</h3>
+          <p className="text-2xl mt-2">{leverageData.low}</p>
         </div>
       </div>
-
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
-            <div className="p-4 border-b flex justify-between items-center">
-              <h3 className="text-xl font-semibold">{modalTitle}</h3>
-              <button 
-                onClick={() => setShowModal(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                ×
-              </button>
-            </div>
-            <div className="p-4 max-h-[70vh] overflow-y-auto">
-              {selectedTasks.length === 0 ? (
-                <p className="text-gray-500 text-center">No tasks found</p>
-              ) : (
-                <div className="space-y-3">
-                  {selectedTasks.map((task, index) => (
-                    <div key={index} className="p-3 bg-gray-50 rounded-lg">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="font-medium">{task.name}</p>
-                          <p className="text-sm text-gray-500">
-                            {new Date(task.timestamp).toLocaleString()}
-                          </p>
-                        </div>
-                        <span className="font-mono">{task.duration}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
