@@ -11,6 +11,8 @@ function AllTasks() {
   const [searchTerm, setSearchTerm] = useState('');
   const [leverageFilter, setLeverageFilter] = useState('all');
   const [sortBy, setSortBy] = useState('');
+  const [selectedTasks, setSelectedTasks] = useState(new Set());
+  const [selectAll, setSelectAll] = useState(false);
 
   // Convert duration string (HH:MM:SS) to seconds for sorting
   const durationToSeconds = (duration) => {
@@ -18,11 +20,16 @@ function AllTasks() {
     return hours * 3600 + minutes * 60 + seconds;
   };
 
-  // Load all tasks on component mount
+  // Load all tasks and apply default 24h filter on component mount
   useEffect(() => {
     const tasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
     setAllTasks(tasks);
-    setFilteredTasks(tasks);
+    
+    // Apply default 24h filter
+    const now = new Date();
+    const cutoff = new Date(now - 24 * 60 * 60 * 1000);
+    const filtered = tasks.filter(task => new Date(task.timestamp) >= cutoff);
+    setFilteredTasks(filtered);
   }, []);
 
   // Handle clicking outside of date picker
@@ -77,7 +84,7 @@ function AllTasks() {
     }
 
     // Sort tasks
-    if (sortBy) {  // Only sort if a sort option is selected
+    if (sortBy) {
       switch (sortBy) {
         case 'name-asc':
           filtered.sort((a, b) => a.name.localeCompare(b.name));
@@ -123,8 +130,45 @@ function AllTasks() {
     }
   };
 
+  const handleTaskSelect = (timestamp) => {
+    const newSelected = new Set(selectedTasks);
+    if (newSelected.has(timestamp)) {
+      newSelected.delete(timestamp);
+    } else {
+      newSelected.add(timestamp);
+    }
+    setSelectedTasks(newSelected);
+  };
+
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedTasks(new Set());
+    } else {
+      setSelectedTasks(new Set(filteredTasks.map(task => task.timestamp)));
+    }
+    setSelectAll(!selectAll);
+  };
+
+  const handleDeleteSelected = () => {
+    if (window.confirm('Are you sure you want to delete the selected tasks?')) {
+      const updatedTasks = allTasks.filter(task => !selectedTasks.has(task.timestamp));
+      setAllTasks(updatedTasks);
+      localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
+      setSelectedTasks(new Set());
+      setSelectAll(false);
+    }
+  };
+
+  const handleDeleteTask = (timestamp) => {
+    if (window.confirm('Are you sure you want to delete this task?')) {
+      const updatedTasks = allTasks.filter(task => task.timestamp !== timestamp);
+      setAllTasks(updatedTasks);
+      localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
+    }
+  };
+
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto p-6">
       {/* Controls */}
       <div className="space-y-4 mb-6">
         {/* First Row: Date Controls */}
@@ -154,7 +198,7 @@ function AllTasks() {
           </button>
 
           {showDatePicker && (
-            <div ref={datePickerRef} className="absolute mt-2 p-4 bg-white rounded-lg shadow-lg border z-10">
+            <div ref={datePickerRef} className="absolute mt-2 p-4 bg-white rounded-lg shadow-lg border">
               <div className="space-y-3">
                 <div>
                   <label className="block text-sm text-gray-600 mb-1">From</label>
@@ -224,6 +268,29 @@ function AllTasks() {
             </optgroup>
           </select>
         </div>
+
+        {/* Bulk Actions */}
+        {filteredTasks.length > 0 && (
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={selectAll}
+                onChange={handleSelectAll}
+                className="h-4 w-4"
+              />
+              <span className="text-sm text-gray-600">Select All</span>
+            </div>
+            {selectedTasks.size > 0 && (
+              <button
+                onClick={handleDeleteSelected}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+              >
+                Delete Selected ({selectedTasks.size})
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Tasks List */}
@@ -236,11 +303,19 @@ function AllTasks() {
           filteredTasks.map((task, index) => (
             <div key={index} className="p-4 bg-white rounded-lg shadow">
               <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <h3 className="font-medium">{task.name}</h3>
-                  <p className="text-sm text-gray-500">
-                    {new Date(task.timestamp).toLocaleString()}
-                  </p>
+                <div className="flex items-center gap-3 flex-1">
+                  <input
+                    type="checkbox"
+                    checked={selectedTasks.has(task.timestamp)}
+                    onChange={() => handleTaskSelect(task.timestamp)}
+                    className="h-4 w-4"
+                  />
+                  <div>
+                    <h3 className="font-medium">{task.name}</h3>
+                    <p className="text-sm text-gray-500">
+                      {new Date(task.timestamp).toLocaleString()}
+                    </p>
+                  </div>
                 </div>
                 <div className="flex items-center space-x-4">
                   <span className="font-mono">{task.duration}</span>
@@ -254,6 +329,12 @@ function AllTasks() {
                     <option value="medium">Medium Leverage</option>
                     <option value="low">Low Leverage</option>
                   </select>
+                  <button
+                    onClick={() => handleDeleteTask(task.timestamp)}
+                    className="text-red-500 hover:text-red-600"
+                  >
+                    ×
+                  </button>
                 </div>
               </div>
             </div>
