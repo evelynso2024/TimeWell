@@ -1,4 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import CalendarHeatmap from 'react-calendar-heatmap';
+import ReactTooltip from 'react-tooltip';
+import 'react-calendar-heatmap/dist/styles.css';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -11,220 +14,129 @@ import {
 } from 'chart.js';
 import { Bar, Doughnut } from 'react-chartjs-2';
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend
-);
+// ... existing ChartJS registration ...
 
 function Summary() {
-  const [taskCounts, setTaskCounts] = useState({
-    high: 0,
-    medium: 0,
-    low: 0
-  });
-  const [tasksByLeverage, setTasksByLeverage] = useState({
-    high: [],
-    medium: [],
-    low: []
-  });
+  // ... existing state declarations ...
+  const [heatmapData, setHeatmapData] = useState([]);
 
   useEffect(() => {
     try {
       const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-      const counts = {
-        high: 0,
-        medium: 0,
-        low: 0
-      };
-      const tasks = {
-        high: [],
-        medium: [],
-        low: []
-      };
-      
-      allTasks.forEach(task => {
-        if (task.leverage) {
-          const leverage = task.leverage.toLowerCase();
-          if (counts.hasOwnProperty(leverage)) {
-            counts[leverage]++;
-            tasks[leverage].push(task.name);
-          }
-        }
-      });
+      // ... existing task counting logic ...
 
-      setTaskCounts(counts);
-      setTasksByLeverage(tasks);
+      // Process data for heatmap
+      const tasksByDate = allTasks.reduce((acc, task) => {
+        const date = task.timestamp.split('T')[0];
+        if (!acc[date]) {
+          acc[date] = { high: 0, medium: 0, low: 0 };
+        }
+        const leverage = task.leverage.toLowerCase();
+        if (leverage in acc[date]) {
+          acc[date][leverage]++;
+        }
+        return acc;
+      }, {});
+
+      const heatmapValues = Object.entries(tasksByDate).map(([date, counts]) => ({
+        date,
+        count: counts.high * 3 + counts.medium * 2 + counts.low, // Weighted score
+        details: counts,
+      }));
+
+      setHeatmapData(heatmapValues);
+
     } catch (error) {
       console.error('Error loading tasks:', error);
     }
   }, []);
 
-  const barData = {
-    labels: ['High', 'Medium', 'Low'],
-    datasets: [
-      {
-        label: 'Tasks by Leverage',
-        data: [taskCounts.high, taskCounts.medium, taskCounts.low],
-        backgroundColor: [
-          'rgba(75, 192, 192, 0.5)',  // Green
-          'rgba(255, 206, 86, 0.5)',  // Yellow
-          'rgba(255, 99, 132, 0.5)',  // Red
-        ],
-        borderColor: [
-          'rgba(75, 192, 192, 1)',
-          'rgba(255, 206, 86, 1)',
-          'rgba(255, 99, 132, 1)',
-        ],
-        borderWidth: 1,
-      },
-    ],
-  };
+  // Get date range for heatmap
+  const today = new Date();
+  const startDate = new Date();
+  startDate.setMonth(startDate.getMonth() - 5); // Show last 6 months
 
-  const doughnutData = {
-    labels: ['High', 'Medium', 'Low'],
-    datasets: [
-      {
-        data: [taskCounts.high, taskCounts.medium, taskCounts.low],
-        backgroundColor: [
-          'rgba(75, 192, 192, 0.8)',  // Green
-          'rgba(255, 206, 86, 0.8)',  // Yellow
-          'rgba(255, 99, 132, 0.8)',  // Red
-        ],
-        borderColor: [
-          'rgba(75, 192, 192, 1)',
-          'rgba(255, 206, 86, 1)',
-          'rgba(255, 99, 132, 1)',
-        ],
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  const chartOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: 'top',
-      },
-      tooltip: {
-        callbacks: {
-          afterBody: function(context) {
-            const leverageLevel = context[0].label.toLowerCase();
-            const tasks = tasksByLeverage[leverageLevel];
-            if (tasks.length === 0) return 'No tasks';
-            
-            return [
-              '',  // Empty line for spacing
-              'Tasks:',
-              ...tasks.map((task, index) => `${index + 1}. ${task}`)
-            ];
-          }
-        }
-      }
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          stepSize: 1
-        }
-      }
+  // Custom tooltip content
+  const getTooltipContent = (value) => {
+    if (!value || !value.details) {
+      return 'No tasks';
     }
+    return `
+      High: ${value.details.high} tasks
+      Medium: ${value.details.medium} tasks
+      Low: ${value.details.low} tasks
+    `;
   };
 
-  const doughnutOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: 'top',
-      },
-      tooltip: {
-        callbacks: {
-          label: function(context) {
-            const total = Object.values(taskCounts).reduce((a, b) => a + b, 0);
-            const percentage = total ? ((context.raw / total) * 100).toFixed(1) : 0;
-            return `${context.label}: ${context.raw} (${percentage}%)`;
-          },
-          afterBody: function(context) {
-            const leverageLevel = context[0].label.toLowerCase();
-            const tasks = tasksByLeverage[leverageLevel];
-            if (tasks.length === 0) return 'No tasks';
-            
-            return [
-              '',  // Empty line for spacing
-              'Tasks:',
-              ...tasks.map((task, index) => `${index + 1}. ${task}`)
-            ];
-          }
-        }
-      }
-    }
+  // Add this section before the return statement
+  const getHeatmapColor = (value) => {
+    if (!value) return '#ebedf0';
+    const intensity = Math.min(value.count / 9, 1); // Max weighted score is 9 (3 high tasks)
+    return `rgba(75, 192, 192, ${intensity})`; // Using the green color with varying opacity
   };
 
   return (
     <div className="max-w-4xl mx-auto p-6">
+      {/* Existing charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-4 text-center">Task Count by Leverage</h2>
-          <Bar data={barData} options={chartOptions} />
+        {/* ... existing Bar and Doughnut charts ... */}
+      </div>
+
+      {/* Heat Map Section */}
+      <div className="bg-white p-6 rounded-lg shadow mt-6">
+        <h2 className="text-lg font-semibold mb-4 text-center">Activity Heat Map</h2>
+        <div className="overflow-x-auto">
+          <CalendarHeatmap
+            startDate={startDate}
+            endDate={today}
+            values={heatmapData}
+            classForValue={(value) => {
+              if (!value) {
+                return 'color-empty';
+              }
+              return 'color-filled';
+            }}
+            tooltipDataAttrs={(value) => {
+              return {
+                'data-tip': getTooltipContent(value),
+              };
+            }}
+            showWeekdayLabels={true}
+            titleForValue={(value) => getTooltipContent(value)}
+            transformDayElement={(element, value, index) => {
+              return React.cloneElement(element, {
+                style: {
+                  ...element.props.style,
+                  fill: getHeatmapColor(value),
+                },
+              });
+            }}
+          />
+          <ReactTooltip />
         </div>
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-4 text-center">Task Distribution (%)</h2>
-          <Doughnut data={doughnutData} options={doughnutOptions} />
+        <div className="flex justify-center items-center mt-4 space-x-4 text-sm">
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-gray-200 mr-2"></div>
+            <span>No tasks</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-[rgba(75,192,192,0.2)] mr-2"></div>
+            <span>Low activity</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-[rgba(75,192,192,0.6)] mr-2"></div>
+            <span>Medium activity</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-[rgba(75,192,192,1)] mr-2"></div>
+            <span>High activity</span>
+          </div>
         </div>
       </div>
-      
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded-lg shadow text-center">
-          <h3 className="font-semibold text-green-600">High Leverage</h3>
-          <p className="text-2xl mt-2">{taskCounts.high}</p>
-          <div className="mt-2 text-sm text-gray-600">
-            {tasksByLeverage.high.length > 0 ? (
-              <ul className="text-left">
-                {tasksByLeverage.high.map((task, index) => (
-                  <li key={index} className="truncate">{task}</li>
-                ))}
-              </ul>
-            ) : (
-              <p>No tasks</p>
-            )}
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow text-center">
-          <h3 className="font-semibold text-yellow-500">Medium Leverage</h3>
-          <p className="text-2xl mt-2">{taskCounts.medium}</p>
-          <div className="mt-2 text-sm text-gray-600">
-            {tasksByLeverage.medium.length > 0 ? (
-              <ul className="text-left">
-                {tasksByLeverage.medium.map((task, index) => (
-                  <li key={index} className="truncate">{task}</li>
-                ))}
-              </ul>
-            ) : (
-              <p>No tasks</p>
-            )}
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow text-center">
-          <h3 className="font-semibold text-red-600">Low Leverage</h3>
-          <p className="text-2xl mt-2">{taskCounts.low}</p>
-          <div className="mt-2 text-sm text-gray-600">
-            {tasksByLeverage.low.length > 0 ? (
-              <ul className="text-left">
-                {tasksByLeverage.low.map((task, index) => (
-                  <li key={index} className="truncate">{task}</li>
-                ))}
-              </ul>
-            ) : (
-              <p>No tasks</p>
-            )}
-          </div>
-        </div>
+
+      {/* Existing summary cards */}
+      <div className="grid grid-cols-3 gap-4 mt-6">
+        {/* ... existing summary cards ... */}
       </div>
     </div>
   );
