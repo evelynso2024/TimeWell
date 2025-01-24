@@ -10,7 +10,6 @@ import {
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 
-// Register ChartJS components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -26,6 +25,11 @@ function Summary() {
     medium: 0,
     low: 0
   });
+  const [tasksByLeverage, setTasksByLeverage] = useState({
+    high: [],
+    medium: [],
+    low: []
+  });
 
   useEffect(() => {
     try {
@@ -35,17 +39,24 @@ function Summary() {
         medium: 0,
         low: 0
       };
+      const tasks = {
+        high: [],
+        medium: [],
+        low: []
+      };
       
       allTasks.forEach(task => {
         if (task.leverage) {
           const leverage = task.leverage.toLowerCase();
           if (counts.hasOwnProperty(leverage)) {
             counts[leverage]++;
+            tasks[leverage].push(task.name);
           }
         }
       });
 
       setTaskCounts(counts);
+      setTasksByLeverage(tasks);
     } catch (error) {
       console.error('Error loading tasks:', error);
     }
@@ -59,12 +70,12 @@ function Summary() {
         data: [taskCounts.high, taskCounts.medium, taskCounts.low],
         backgroundColor: [
           'rgba(75, 192, 192, 0.5)',  // Green
-          'rgba(255, 206, 86, 0.5)',  // Yellow (changed from blue)
+          'rgba(255, 206, 86, 0.5)',  // Yellow
           'rgba(255, 99, 132, 0.5)',  // Red
         ],
         borderColor: [
           'rgba(75, 192, 192, 1)',
-          'rgba(255, 206, 86, 1)',    // Yellow border (changed from blue)
+          'rgba(255, 206, 86, 1)',
           'rgba(255, 99, 132, 1)',
         ],
         borderWidth: 1,
@@ -82,6 +93,21 @@ function Summary() {
         display: true,
         text: 'Tasks by Leverage Level',
       },
+      tooltip: {
+        callbacks: {
+          afterBody: function(context) {
+            const leverageLevel = context[0].label.toLowerCase();
+            const tasks = tasksByLeverage[leverageLevel];
+            if (tasks.length === 0) return 'No tasks';
+            
+            return [
+              '',  // Empty line for spacing
+              'Tasks:',
+              ...tasks.map((task, index) => `${index + 1}. ${task}`)
+            ];
+          }
+        }
+      }
     },
     scales: {
       y: {
@@ -103,14 +129,47 @@ function Summary() {
         <div className="bg-white p-4 rounded-lg shadow text-center">
           <h3 className="font-semibold text-green-600">High Leverage</h3>
           <p className="text-2xl mt-2">{taskCounts.high}</p>
+          <div className="mt-2 text-sm text-gray-600">
+            {tasksByLeverage.high.length > 0 ? (
+              <ul className="text-left">
+                {tasksByLeverage.high.map((task, index) => (
+                  <li key={index} className="truncate">{task}</li>
+                ))}
+              </ul>
+            ) : (
+              <p>No tasks</p>
+            )}
+          </div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow text-center">
           <h3 className="font-semibold text-yellow-500">Medium Leverage</h3>
           <p className="text-2xl mt-2">{taskCounts.medium}</p>
+          <div className="mt-2 text-sm text-gray-600">
+            {tasksByLeverage.medium.length > 0 ? (
+              <ul className="text-left">
+                {tasksByLeverage.medium.map((task, index) => (
+                  <li key={index} className="truncate">{task}</li>
+                ))}
+              </ul>
+            ) : (
+              <p>No tasks</p>
+            )}
+          </div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow text-center">
           <h3 className="font-semibold text-red-600">Low Leverage</h3>
           <p className="text-2xl mt-2">{taskCounts.low}</p>
+          <div className="mt-2 text-sm text-gray-600">
+            {tasksByLeverage.low.length > 0 ? (
+              <ul className="text-left">
+                {tasksByLeverage.low.map((task, index) => (
+                  <li key={index} className="truncate">{task}</li>
+                ))}
+              </ul>
+            ) : (
+              <p>No tasks</p>
+            )}
+          </div>
         </div>
       </div>
     </div>
