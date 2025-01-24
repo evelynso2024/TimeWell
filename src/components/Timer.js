@@ -45,12 +45,22 @@ function Timer() {
     if (isRunning) {
       setIsRunning(false);
       playSound();
-      // Add task to recent tasks
-      setRecentTasks(prev => [{
+      
+      // Create new task
+      const newTask = {
         name: task,
         duration: formatTime(time),
         timestamp: new Date().toISOString(),
-      }, ...prev.slice(0, 4)]); // Keep only 5 recent tasks
+        leverage: ""  // Default empty leverage
+      };
+
+      // Update recent tasks (always keep 5)
+      setRecentTasks(prev => [newTask, ...prev].slice(0, 5));
+
+      // Store in localStorage for All Tasks page
+      const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
+      localStorage.setItem('allTasks', JSON.stringify([newTask, ...allTasks]));
+
       // Reset
       setTask('');
       setTime(0);
@@ -100,22 +110,25 @@ function Timer() {
         )}
       </div>
 
-      {/* Recent Tasks */}
-      {recentTasks.length > 0 && (
-        <div className="mt-8">
-          <h2 className="text-lg font-medium mb-4">Recent Tasks</h2>
-          <div className="space-y-2">
-            {recentTasks.map((recentTask, index) => (
-              <div key={index} className="p-3 bg-white rounded-lg shadow">
-                <div className="flex justify-between items-center">
-                  <span>{recentTask.name}</span>
-                  <span className="text-gray-500">{recentTask.duration}</span>
-                </div>
+      {/* Recent Tasks - Always show section */}
+      <div className="mt-8">
+        <h2 className="text-lg font-medium mb-4">Recent Tasks</h2>
+        <div className="space-y-2">
+          {recentTasks.map((recentTask, index) => (
+            <div key={index} className="p-3 bg-white rounded-lg shadow">
+              <div className="flex justify-between items-center">
+                <span>{recentTask.name}</span>
+                <span className="text-gray-500">{recentTask.duration}</span>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
+          {recentTasks.length === 0 && (
+            <div className="text-gray-500 text-center py-4">
+              No recent tasks
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
