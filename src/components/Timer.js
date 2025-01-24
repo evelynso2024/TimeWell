@@ -82,15 +82,15 @@ function Timer() {
     <div className="max-w-2xl mx-auto p-6">
       {isRunning ? (
         // Timer Running Mode - Minimal Interface
-        <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8">
-          {/* Large Timer Display */}
-          <div className="text-8xl font-mono mb-8">
-            {formatTime(time)}
+        <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-12">
+          {/* Current Task Display - Larger and Above Timer */}
+          <div className="text-6xl font-medium text-center">
+            {task}
           </div>
 
-          {/* Current Task Display */}
-          <div className="text-4xl font-medium text-center mb-8">
-            {task}
+          {/* Timer Display - Smaller than Task */}
+          <div className="text-5xl font-mono">
+            {formatTime(time)}
           </div>
 
           {/* End Timer Button */}
@@ -107,51 +107,4 @@ function Timer() {
           {/* Timer Display */}
           <div className="text-center mb-8">
             <div className="text-6xl font-mono mb-4">
-              {formatTime(time)}
-            </div>
-          </div>
-
-          {/* Task Input and Start Button */}
-          <div className="space-y-4 mb-8">
-            <input
-              type="text"
-              value={task}
-              onChange={(e) => setTask(e.target.value)}
-              placeholder="Enter your task..."
-              className="w-full p-3 border rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-            <button
-              onClick={handleStart}
-              disabled={!task.trim()}
-              className="w-full py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
-            >
-              Start Timer
-            </button>
-          </div>
-
-          {/* Recent Tasks Section */}
-          <div className="mt-8">
-            <h2 className="text-lg font-medium mb-4">Recent Tasks</h2>
-            <div className="space-y-2">
-              {recentTasks.map((recentTask, index) => (
-                <div key={index} className="p-3 bg-white rounded-lg shadow">
-                  <div className="flex justify-between items-center">
-                    <span>{recentTask.name}</span>
-                    <span className="text-gray-500">{recentTask.duration}</span>
-                  </div>
-                </div>
-              ))}
-              {recentTasks.length === 0 && (
-                <div className="text-gray-500 text-center py-4">
-                  No recent tasks
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-export default Timer;
+              {formatTime(time
