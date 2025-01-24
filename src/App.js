@@ -1,23 +1,51 @@
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import Timer from './components/Timer';
 import AllTasks from './components/AllTasks';
 import Summary from './components/Summary';
 import React, { useState } from 'react';
 
+// Create a new NavLink component
+function NavLink({ to, children, disabled, onClick }) {
+  const location = useLocation();
+  const isActive = location.pathname === to;
+  
+  const baseClasses = "py-4 px-2 font-semibold transition duration-300";
+  const activeClasses = "text-blue-500 border-b-2 border-blue-500";
+  const inactiveClasses = "text-gray-500 hover:text-blue-500";
+  const disabledClasses = "text-gray-300 cursor-not-allowed";
+
+  if (disabled) {
+    return (
+      <button
+        onClick={onClick}
+        className={`${baseClasses} ${disabledClasses}`}
+      >
+        {children}
+      </button>
+    );
+  }
+
+  return (
+    <Link
+      to={to}
+      className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
+    >
+      {children}
+    </Link>
+  );
+}
+
 function App() {
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [showWarning, setShowWarning] = useState(false);
 
-  // Function to handle timer state changes
   const handleTimerStateChange = (isActive) => {
     setIsTimerActive(isActive);
   };
 
-  // Function to handle disabled navigation clicks
   const handleDisabledClick = (e) => {
     e.preventDefault();
     setShowWarning(true);
-    // Auto-hide warning after 2 seconds
     setTimeout(() => setShowWarning(false), 2000);
   };
 
@@ -28,42 +56,35 @@ function App() {
         <nav className="bg-white shadow-lg relative">
           <div className="max-w-6xl mx-auto px-4">
             <div className="flex justify-center space-x-8">
-              <Link
-                to="/"
-                className="py-4 px-2 text-gray-500 font-semibold hover:text-blue-500 transition duration-300"
-              >
+              <NavLink to="/">
                 Timer
-              </Link>
-              {/* Disabled links when timer is active */}
+              </NavLink>
+              
               {isTimerActive ? (
                 <>
-                  <button
+                  <NavLink
+                    disabled
                     onClick={handleDisabledClick}
-                    className="py-4 px-2 text-gray-300 font-semibold cursor-not-allowed"
+                    to="/all-tasks"
                   >
                     All Tasks
-                  </button>
-                  <button
+                  </NavLink>
+                  <NavLink
+                    disabled
                     onClick={handleDisabledClick}
-                    className="py-4 px-2 text-gray-300 font-semibold cursor-not-allowed"
+                    to="/summary"
                   >
                     Summary
-                  </button>
+                  </NavLink>
                 </>
               ) : (
                 <>
-                  <Link
-                    to="/all-tasks"
-                    className="py-4 px-2 text-gray-500 font-semibold hover:text-blue-500 transition duration-300"
-                  >
+                  <NavLink to="/all-tasks">
                     All Tasks
-                  </Link>
-                  <Link
-                    to="/summary"
-                    className="py-4 px-2 text-gray-500 font-semibold hover:text-blue-500 transition duration-300"
-                  >
+                  </NavLink>
+                  <NavLink to="/summary">
                     Summary
-                  </Link>
+                  </NavLink>
                 </>
               )}
             </div>
