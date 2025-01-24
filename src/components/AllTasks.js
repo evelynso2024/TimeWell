@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 function AllTasks() {
-  const [tasks, setTasks] = useState([]); 
+  const [tasks, setTasks] = useState([]);
   const [timeFilter, setTimeFilter] = useState('24h');
   const [selectedTasks, setSelectedTasks] = useState(new Set());
   const [filterType, setFilterType] = useState('all');
@@ -146,18 +146,15 @@ function AllTasks() {
             onChange={(e) => setSortBy(e.target.value)}
             className="p-2 border rounded bg-white min-w-[200px]"
           >
-            <optgroup label="DATE">
-              <option value="newest">Newest to Oldest</option>
-              <option value="oldest">Oldest to Newest</option>
-            </optgroup>
-            <optgroup label="DURATION">
-              <option value="shortest">Shortest to Longest</option>
-              <option value="longest">Longest to Shortest</option>
-            </optgroup>
-            <optgroup label="NAME">
-              <option value="nameAZ">A to Z</option>
-              <option value="nameZA">Z to A</option>
-            </optgroup>
+            <option disabled>DATE</option>
+            <option value="newest">Newest to Oldest</option>
+            <option value="oldest">Oldest to Newest</option>
+            <option disabled>DURATION</option>
+            <option value="shortest">Shortest to Longest</option>
+            <option value="longest">Longest to Shortest</option>
+            <option disabled>NAME</option>
+            <option value="nameAZ">A to Z</option>
+            <option value="nameZA">Z to A</option>
           </select>
         </div>
 
