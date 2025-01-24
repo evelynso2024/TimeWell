@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import timerSound from '../sounds/timer-sound.mp3'; // Make sure this file exists in your project
 
 function Timer() {
   const [isTimerActive, setIsTimerActive] = useState(false);
@@ -9,7 +8,6 @@ function Timer() {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [recentTasks, setRecentTasks] = useState([]);
   const navigate = useNavigate();
-  const audio = new Audio(timerSound);
 
   // Load recent tasks
   useEffect(() => {
@@ -32,13 +30,11 @@ function Timer() {
     e.preventDefault(); // Prevent form submission
     if (!task.trim()) return;
     
-    audio.play();
     setIsTimerActive(true);
     setStartTime(Date.now());
   };
 
   const endTimer = () => {
-    audio.play();
     setIsTimerActive(false);
     
     const newTask = {
