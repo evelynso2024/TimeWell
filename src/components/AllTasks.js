@@ -10,7 +10,7 @@ function AllTasks() {
   const [filteredTasks, setFilteredTasks] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [leverageFilter, setLeverageFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('date-newest');
+  const [sortBy, setSortBy] = useState('');
 
   // Convert duration string (HH:MM:SS) to seconds for sorting
   const durationToSeconds = (duration) => {
@@ -77,27 +77,29 @@ function AllTasks() {
     }
 
     // Sort tasks
-    switch (sortBy) {
-      case 'name-asc':
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case 'name-desc':
-        filtered.sort((a, b) => b.name.localeCompare(a.name));
-        break;
-      case 'date-newest':
-        filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-        break;
-      case 'date-oldest':
-        filtered.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-        break;
-      case 'duration-longest':
-        filtered.sort((a, b) => durationToSeconds(b.duration) - durationToSeconds(a.duration));
-        break;
-      case 'duration-shortest':
-        filtered.sort((a, b) => durationToSeconds(a.duration) - durationToSeconds(b.duration));
-        break;
-      default:
-        break;
+    if (sortBy) {  // Only sort if a sort option is selected
+      switch (sortBy) {
+        case 'name-asc':
+          filtered.sort((a, b) => a.name.localeCompare(b.name));
+          break;
+        case 'name-desc':
+          filtered.sort((a, b) => b.name.localeCompare(a.name));
+          break;
+        case 'date-newest':
+          filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+          break;
+        case 'date-oldest':
+          filtered.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+          break;
+        case 'duration-longest':
+          filtered.sort((a, b) => durationToSeconds(b.duration) - durationToSeconds(a.duration));
+          break;
+        case 'duration-shortest':
+          filtered.sort((a, b) => durationToSeconds(a.duration) - durationToSeconds(b.duration));
+          break;
+        default:
+          break;
+      }
     }
 
     setFilteredTasks(filtered);
