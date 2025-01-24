@@ -5,7 +5,7 @@ function AllTasks() {
   const [timeFilter, setTimeFilter] = useState('24h');
   const [selectedTasks, setSelectedTasks] = useState(new Set());
   const [filterType, setFilterType] = useState('all');
-  const [sortBy, setSortBy] = useState('newest');
+  const [sortBy, setSortBy] = useState('newest'); 
 
   useEffect(() => {
     loadTasks();
