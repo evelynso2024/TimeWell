@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 function Timer() {
   const [isTimerActive, setIsTimerActive] = useState(false);
@@ -7,13 +6,14 @@ function Timer() {
   const [startTime, setStartTime] = useState(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [recentTasks, setRecentTasks] = useState([]);
-  const navigate = useNavigate();
 
+  // Load recent tasks
   useEffect(() => {
     const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
     setRecentTasks(allTasks.slice(-5).reverse());
   }, []);
 
+  // Timer effect
   useEffect(() => {
     let intervalId;
     if (isTimerActive) {
@@ -27,7 +27,6 @@ function Timer() {
   const startTimer = (e) => {
     e.preventDefault();
     if (!task.trim()) return;
-    
     setIsTimerActive(true);
     setStartTime(Date.now());
   };
