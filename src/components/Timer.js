@@ -48,8 +48,8 @@ function Timer() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <div className="p-8 bg-white rounded-lg shadow-md w-96">
+    <div className="container mx-auto p-4 max-w-md">
+      <div className="bg-white rounded-lg shadow-lg p-6">
         <div className="text-6xl text-center mb-8 font-mono">
           {formatTime(timeLeft)}
         </div>
