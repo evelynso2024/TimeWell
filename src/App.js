@@ -1,65 +1,43 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Timer from './components/Timer';
 import AllTasks from './components/AllTasks';
-
-// Placeholder component for Summary page
-const Summary = () => <div className="text-xl">Summary Page</div>;
+import Summary from './components/Summary';
 
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50">
-        {/* Navigation Tabs */}
-        <nav className="bg-white border-b">
-          <div className="max-w-6xl mx-auto">
-            <div className="flex justify-center gap-1 pt-2">
-              <NavLink
+      <div className="min-h-screen bg-gray-100">
+        {/* Navigation */}
+        <nav className="bg-white shadow-lg">
+          <div className="max-w-6xl mx-auto px-4">
+            <div className="flex justify-center space-x-8">
+              <Link
                 to="/"
-                end
-                className={({ isActive }) =>
-                  `px-8 py-3 font-medium rounded-t-lg ${
-                    isActive
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`
-                }
+                className="py-4 px-2 text-gray-500 font-semibold hover:text-blue-500 transition duration-300"
               >
                 Timer
-              </NavLink>
-              <NavLink
-                to="/tasks"
-                className={({ isActive }) =>
-                  `px-8 py-3 font-medium rounded-t-lg ${
-                    isActive
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`
-                }
+              </Link>
+              <Link
+                to="/all-tasks"
+                className="py-4 px-2 text-gray-500 font-semibold hover:text-blue-500 transition duration-300"
               >
                 All Tasks
-              </NavLink>
-              <NavLink
+              </Link>
+              <Link
                 to="/summary"
-                className={({ isActive }) =>
-                  `px-8 py-3 font-medium rounded-t-lg ${
-                    isActive
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`
-                }
+                className="py-4 px-2 text-gray-500 font-semibold hover:text-blue-500 transition duration-300"
               >
                 Summary
-              </NavLink>
+              </Link>
             </div>
           </div>
         </nav>
 
-        {/* Page Content */}
-        <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Content */}
+        <div className="container mx-auto py-8">
           <Routes>
             <Route path="/" element={<Timer />} />
-            <Route path="/tasks" element={<AllTasks />} />
+            <Route path="/all-tasks" element={<AllTasks />} />
             <Route path="/summary" element={<Summary />} />
           </Routes>
         </div>
