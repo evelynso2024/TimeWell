@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 function Timer() {
   const [isTimerActive, setIsTimerActive] = useState(false);
@@ -7,7 +6,6 @@ function Timer() {
   const [startTime, setStartTime] = useState(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [recentTasks, setRecentTasks] = useState([]);
-  const navigate = useNavigate();
 
   // Create audio context on first interaction
   const playClickSound = () => {
@@ -51,12 +49,20 @@ function Timer() {
       playClickSound();
       setIsTimerActive(true);
       setStartTime(Date.now());
+      localStorage.setItem('isTimerActive', 'true');
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && task.trim()) {
+      startTimer();
     }
   };
 
   const endTimer = () => {
     playClickSound();
     setIsTimerActive(false);
+    localStorage.setItem('isTimerActive', 'false');
     
     const newTask = {
       id: Date.now(),
@@ -99,6 +105,7 @@ function Timer() {
               type="text"
               value={task}
               onChange={(e) => setTask(e.target.value)}
+              onKeyPress={handleKeyPress}
               placeholder="What are you working on?"
               className="w-full p-4 text-xl border rounded mb-4"
               autoFocus
