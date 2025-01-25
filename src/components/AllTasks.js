@@ -158,24 +158,26 @@ function AllTasks() {
           </select>
         </div>
 
-        {/* Bulk Actions Row */}
-        <div className="flex items-center space-x-4">
-          <input
-            type="checkbox"
-            checked={selectedTasks.size === tasks.length && tasks.length > 0}
-            onChange={toggleSelectAll}
-            className="h-4 w-4 text-blue-600"
-          />
-          <span className="text-gray-600">Select All</span>
-          {selectedTasks.size > 0 && (
-            <button
-              onClick={deleteSelectedTasks}
-              className="text-red-500 hover:text-red-700 font-medium"
-            >
-              Delete Selected ({selectedTasks.size})
-            </button>
-          )}
-        </div>
+        {/* Only show Bulk Actions Row if there are tasks */}
+        {tasks.length > 0 && (
+          <div className="flex items-center space-x-4">
+            <input
+              type="checkbox"
+              checked={selectedTasks.size === tasks.length && tasks.length > 0}
+              onChange={toggleSelectAll}
+              className="h-4 w-4 text-blue-600"
+            />
+            <span className="text-gray-600">Select All</span>
+            {selectedTasks.size > 0 && (
+              <button
+                onClick={deleteSelectedTasks}
+                className="text-red-500 hover:text-red-700 font-medium"
+              >
+                Delete Selected ({selectedTasks.size})
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-lg shadow">
