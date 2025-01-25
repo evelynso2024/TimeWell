@@ -6,26 +6,36 @@ function AllTasks() {
   const [selectedTasks, setSelectedTasks] = useState(new Set());
   const [filterType, setFilterType] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
+  const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
   useEffect(() => {
     loadTasks();
-  }, [timeFilter, filterType, sortBy]);
+  }, [timeFilter, filterType, sortBy, dateRange]);
 
   const loadTasks = () => {
     let allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
     const now = new Date();
     
     // Time filter
-    allTasks = allTasks.filter(task => {
-      const taskDate = new Date(task.timestamp);
-      const hoursDiff = (now - taskDate) / (1000 * 60 * 60);
-      
-      switch(timeFilter) {
-        case '7d': return hoursDiff <= 168;
-        case '30d': return hoursDiff <= 720;
-        default: return hoursDiff <= 24;
-      }
-    });
+    if (timeFilter === 'custom' && dateRange.start) {
+      const startDate = new Date(dateRange.start);
+      const endDate = dateRange.end ? new Date(dateRange.end) : new Date();
+      allTasks = allTasks.filter(task => {
+        const taskDate = new Date(task.timestamp);
+        return taskDate >= startDate && taskDate <= endDate;
+      });
+    } else {
+      allTasks = allTasks.filter(task => {
+        const taskDate = new Date(task.timestamp);
+        const hoursDiff = (now - taskDate) / (1000 * 60 * 60);
+        
+        switch(timeFilter) {
+          case '7d': return hoursDiff <= 168;
+          case '30d': return hoursDiff <= 720;
+          default: return hoursDiff <= 24;
+        }
+      });
+    }
 
     // Leverage filter
     if (filterType !== 'all') {
@@ -120,15 +130,40 @@ function AllTasks() {
       <div className="mb-6 space-y-4">
         {/* Filters and Sort Row */}
         <div className="flex items-center space-x-4">
-          <select
-            value={timeFilter}
-            onChange={(e) => setTimeFilter(e.target.value)}
-            className="p-2 border rounded bg-white"
-          >
-            <option value="24h">Last 24 hours</option>
-            <option value="7d">Last 7 days</option>
-            <option value="30d">Last 30 days</option>
-          </select>
+          <div className="flex items-center space-x-2">
+            <select
+              value={timeFilter}
+              onChange={(e) => {
+                setTimeFilter(e.target.value);
+                if (e.target.value !== 'custom') {
+                  setDateRange({ start: '', end: '' });
+                }
+              }}
+              className="p-2 border rounded bg-white"
+            >
+              <option value="24h">Last 24 hours</option>
+              <option value="7d">Last 7 days</option>
+              <option value="30d">Last 30 days</option>
+              {dateRange.start && <option value="custom">Custom Range</option>}
+            </select>
+
+            <button
+              onClick={() => document.getElementById('date-range').showPicker()}
+              className="p-2 hover:bg-gray-100 rounded"
+            >
+              📅
+            </button>
+            <input
+              id="date-range"
+              type="date"
+              className="hidden"
+              value={dateRange.start}
+              onChange={(e) => {
+                setDateRange({ ...dateRange, start: e.target.value });
+                setTimeFilter('custom');
+              }}
+            />
+          </div>
 
           <select
             value={filterType}
