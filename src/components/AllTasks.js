@@ -16,10 +16,12 @@ function AllTasks() {
     let allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
     const now = new Date();
     
-    // Time filter
-    if (timeFilter === 'custom' && dateRange.start) {
+    // Date range or time filter
+    if (timeFilter === 'custom' && dateRange.start && dateRange.end) {
       const startDate = new Date(dateRange.start);
-      const endDate = dateRange.end ? new Date(dateRange.end) : new Date();
+      const endDate = new Date(dateRange.end);
+      endDate.setHours(23, 59, 59, 999); // Include the entire end date
+      
       allTasks = allTasks.filter(task => {
         const taskDate = new Date(task.timestamp);
         return taskDate >= startDate && taskDate <= endDate;
@@ -121,6 +123,20 @@ function AllTasks() {
     loadTasks();
   };
 
+  const handleClickOutside = (event) => {
+    const datePicker = document.getElementById('date-picker');
+    if (datePicker && !datePicker.contains(event.target) && !event.target.closest('button')) {
+      datePicker.classList.add('hidden');
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="text-center mb-8">
@@ -144,25 +160,64 @@ function AllTasks() {
               <option value="24h">Last 24 hours</option>
               <option value="7d">Last 7 days</option>
               <option value="30d">Last 30 days</option>
-              {dateRange.start && <option value="custom">Custom Range</option>}
+              {(dateRange.start && dateRange.end) && <option value="custom">Custom Range</option>}
             </select>
 
-            <button
-              onClick={() => document.getElementById('date-range').showPicker()}
-              className="p-2 hover:bg-gray-100 rounded"
-            >
-              📅
-            </button>
-            <input
-              id="date-range"
-              type="date"
-              className="hidden"
-              value={dateRange.start}
-              onChange={(e) => {
-                setDateRange({ ...dateRange, start: e.target.value });
-                setTimeFilter('custom');
-              }}
-            />
+            <div className="relative flex items-center space-x-2">
+              <button
+                onClick={() => document.getElementById('date-picker').classList.toggle('hidden')}
+                className="p-2 hover:bg-gray-100 rounded"
+                title="Select date range"
+              >
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  width="20" 
+                  height="20" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                  className="text-gray-600"
+                >
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+              </button>
+              
+              <div id="date-picker" className="absolute top-12 left-0 bg-white border rounded-lg shadow-lg p-4 z-50 hidden">
+                <div className="space-y-2">
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1">From:</label>
+                    <input
+                      type="date"
+                      value={dateRange.start}
+                      onChange={(e) => {
+                        setDateRange(prev => ({ ...prev, start: e.target.value }));
+                        setTimeFilter('custom');
+                      }}
+                      className="p-2 border rounded w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-1">To:</label>
+                    <input
+                      type="date"
+                      value={dateRange.end}
+                      min={dateRange.start}
+                      onChange={(e) => {
+                        setDateRange(prev => ({ ...prev, end: e.target.value }));
+                        setTimeFilter('custom');
+                      }}
+                      className="p-2 border rounded w-full"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <select
