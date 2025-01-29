@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
-function Timer() {
-  const [isTimerActive, setIsTimerActive] = useState(false);
+function Timer({ setIsTimerActive }) {
+  const [isTimerActive, setIsTimerLocalActive] = useState(false);
   const [task, setTask] = useState('');
   const [startTime, setStartTime] = useState(null);
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -31,8 +31,10 @@ function Timer() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('isTimerActive', JSON.stringify(isTimerActive));
-  }, [isTimerActive]);
+    const storedTimerState = localStorage.getItem('isTimerActive') === 'true';
+    setIsTimerLocalActive(storedTimerState);
+    setIsTimerActive(storedTimerState);
+  }, [setIsTimerActive]);
 
   useEffect(() => {
     let intervalId;
@@ -47,6 +49,7 @@ function Timer() {
   const startTimer = () => {
     if (task.trim()) {
       playClickSound();
+      setIsTimerLocalActive(true);
       setIsTimerActive(true);
       setStartTime(Date.now());
       localStorage.setItem('isTimerActive', 'true');
@@ -61,6 +64,7 @@ function Timer() {
 
   const endTimer = () => {
     playClickSound();
+    setIsTimerLocalActive(false);
     setIsTimerActive(false);
     localStorage.setItem('isTimerActive', 'false');
     
@@ -93,16 +97,6 @@ function Timer() {
       task.id === taskId ? { ...task, leverage } : task
     );
     localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
-    setRecentTasks(updatedTasks.slice(-5).reverse());
-  };
-
-  const deleteTask = (taskId) => {
-    // Remove from localStorage
-    const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-    const updatedTasks = allTasks.filter(task => task.id !== taskId);
-    localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
-    
-    // Update recent tasks
     setRecentTasks(updatedTasks.slice(-5).reverse());
   };
 
@@ -145,24 +139,16 @@ function Timer() {
                         {formatTime(task.duration)}
                       </div>
                     </div>
-                    <div className="flex items-center space-x-4">
-                      <select
-                        value={task.leverage || ''}
-                        onChange={(e) => updateTaskLeverage(task.id, e.target.value)}
-                        className="p-2 border rounded text-sm bg-white"
-                      >
-                        <option value="">Rank</option>
-                        <option value="High">High leverage</option>
-                        <option value="Medium">Medium leverage</option>
-                        <option value="Low">Low leverage</option>
-                      </select>
-                      <button
-                        onClick={() => deleteTask(task.id)}
-                        className="text-red-500 hover:text-red-700 font-bold"
-                      >
-                        ✕
-                      </button>
-                    </div>
+                    <select
+                      value={task.leverage || ''}
+                      onChange={(e) => updateTaskLeverage(task.id, e.target.value)}
+                      className="ml-4 p-2 border rounded text-sm bg-white"
+                    >
+                      <option value="">Rank</option>
+                      <option value="High">High leverage</option>
+                      <option value="Medium">Medium leverage</option>
+                      <option value="Low">Low leverage</option>
+                    </select>
                   </li>
                 ))}
               </ul>
