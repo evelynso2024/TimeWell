@@ -16,7 +16,6 @@ function App() {
   const handleNavigation = (e, path) => {
     if (isTimerActive && path !== '/') {
       e.preventDefault();
-      alert('Please end the current timer before navigating away');
     }
   };
 
@@ -27,27 +26,39 @@ function App() {
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex justify-between h-16">
               <div className="flex space-x-8">
-                <Link to="/" className="flex items-center px-1 pt-1 text-gray-900">
+                <Link 
+                  to="/" 
+                  className="flex items-center px-1 pt-1 text-gray-900"
+                >
                   Timer
                 </Link>
                 <Link 
                   to="/all-tasks" 
                   onClick={(e) => handleNavigation(e, '/all-tasks')}
-                  className={`flex items-center px-1 pt-1 ${isTimerActive ? 'text-gray-400 cursor-not-allowed' : 'text-gray-900'}`}
+                  className={`flex items-center px-1 pt-1 relative ${
+                    isTimerActive ? 'text-gray-400 cursor-not-allowed' : 'text-gray-900'
+                  }`}
+                  title={isTimerActive ? "Focus on your current task" : ""}
                 >
                   All Tasks
                 </Link>
                 <Link 
                   to="/summary" 
                   onClick={(e) => handleNavigation(e, '/summary')}
-                  className={`flex items-center px-1 pt-1 ${isTimerActive ? 'text-gray-400 cursor-not-allowed' : 'text-gray-900'}`}
+                  className={`flex items-center px-1 pt-1 relative ${
+                    isTimerActive ? 'text-gray-400 cursor-not-allowed' : 'text-gray-900'
+                  }`}
+                  title={isTimerActive ? "Focus on your current task" : ""}
                 >
                   Summary
                 </Link>
                 <Link 
                   to="/insights" 
                   onClick={(e) => handleNavigation(e, '/insights')}
-                  className={`flex items-center px-1 pt-1 ${isTimerActive ? 'text-gray-400 cursor-not-allowed' : 'text-gray-900'}`}
+                  className={`flex items-center px-1 pt-1 relative ${
+                    isTimerActive ? 'text-gray-400 cursor-not-allowed' : 'text-gray-900'
+                  }`}
+                  title={isTimerActive ? "Focus on your current task" : ""}
                 >
                   Insights
                 </Link>
