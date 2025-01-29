@@ -1,11 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { PieChart, Pie, Cell } from 'recharts';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js';
+import { Doughnut, Bar } from 'react-chartjs-2';
+
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
 function Summary() {
   const [taskStats, setTaskStats] = useState({
-    counts: [],
-    percentages: []
+    counts: {
+      labels: ['High', 'Medium', 'Low', 'Unranked'],
+      datasets: [{
+        data: [0, 0, 0, 0],
+        backgroundColor: ['#4F46E5', '#10B981', '#F59E0B', '#6B7280']
+      }]
+    },
+    percentages: {
+      labels: ['High', 'Medium', 'Low', 'Unranked'],
+      datasets: [{
+        data: [0, 0, 0, 0],
+        backgroundColor: ['#4F46E5', '#10B981', '#F59E0B', '#6B7280']
+      }]
+    }
   });
 
   useEffect(() => {
@@ -15,7 +29,6 @@ function Summary() {
   const calculateStats = () => {
     const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
     
-    // Count tasks by leverage level
     const leverageCounts = {
       'High': 0,
       'Medium': 0,
@@ -31,24 +44,30 @@ function Summary() {
       }
     });
 
-    // Calculate percentages
     const total = allTasks.length;
-    const percentages = Object.keys(leverageCounts).map(key => ({
-      name: key,
-      value: total > 0 ? Math.round((leverageCounts[key] / total) * 100) : 0
-    }));
+    const percentages = Object.values(leverageCounts).map(count => 
+      total > 0 ? Math.round((count / total) * 100) : 0
+    );
 
-    // Format data for bar chart
-    const counts = Object.keys(leverageCounts).map(key => ({
-      name: key,
-      tasks: leverageCounts[key]
-    }));
-
-    setTaskStats({ counts, percentages });
+    setTaskStats({
+      counts: {
+        labels: ['High', 'Medium', 'Low', 'Unranked'],
+        datasets: [{
+          data: Object.values(leverageCounts),
+          backgroundColor: ['#4F46E5', '#10B981', '#F59E0B', '#6B7280'],
+          borderWidth: 0
+        }]
+      },
+      percentages: {
+        labels: ['High', 'Medium', 'Low', 'Unranked'],
+        datasets: [{
+          data: percentages,
+          backgroundColor: ['#4F46E5', '#10B981', '#F59E0B', '#6B7280'],
+          borderWidth: 0
+        }]
+      }
+    });
   };
-
-  // Colors for the donut chart
-  const COLORS = ['#4F46E5', '#10B981', '#F59E0B', '#6B7280'];
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -60,52 +79,46 @@ function Summary() {
         {/* Bar Chart */}
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4">Task Counts by Category</h2>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={taskStats.counts}>
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="tasks" fill="#4F46E5" />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="h-64 flex items-center justify-center">
+            <Bar 
+              data={taskStats.counts}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    display: false
+                  }
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    ticks: {
+                      stepSize: 1
+                    }
+                  }
+                }
+              }}
+            />
           </div>
         </div>
 
         {/* Donut Chart */}
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4">Task Distribution (%)</h2>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={taskStats.percentages}
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {taskStats.percentages.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          {/* Legend */}
-          <div className="flex flex-wrap justify-center mt-4 gap-4">
-            {taskStats.percentages.map((entry, index) => (
-              <div key={`legend-${index}`} className="flex items-center">
-                <div 
-                  className="w-3 h-3 rounded-full mr-2" 
-                  style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                />
-                <span className="text-sm text-gray-600">
-                  {entry.name} ({entry.value}%)
-                </span>
-              </div>
-            ))}
+          <div className="h-64 flex items-center justify-center">
+            <Doughnut 
+              data={taskStats.percentages}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: 'bottom'
+                  }
+                }
+              }}
+            />
           </div>
         </div>
       </div>
