@@ -14,7 +14,7 @@ function Summary() {
       }]
     },
     percentages: {
-      labels: ['High', 'Medium', 'Low', 'Unranked'],
+      labels: ['High', 'Medium', 'Low', 'Unranked'], 
       datasets: [{
         data: [0, 0, 0, 0],
         backgroundColor: ['#4F46E5', '#10B981', '#F59E0B', '#6B7280']
