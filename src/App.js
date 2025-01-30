@@ -24,18 +24,18 @@ function App() {
       <div className="min-h-screen bg-gray-100">
         <nav className="bg-white shadow-sm">
           <div className="max-w-7xl mx-auto px-4">
-            <div className="flex justify-between h-16">
-              <div className="flex space-x-8">
+            <div className="flex justify-center h-16"> {/* Changed to justify-center */}
+              <div className="flex space-x-12"> {/* Increased space-x to 12 for better spacing */}
                 <Link 
                   to="/" 
-                  className="flex items-center px-1 pt-1 text-gray-900"
+                  className="flex items-center px-3 pt-1 text-gray-900 font-medium" /* Added padding and font-medium */
                 >
                   Timer
                 </Link>
                 <Link 
                   to="/all-tasks" 
                   onClick={(e) => handleNavigation(e, '/all-tasks')}
-                  className={`flex items-center px-1 pt-1 relative ${
+                  className={`flex items-center px-3 pt-1 font-medium ${
                     isTimerActive ? 'text-gray-400 cursor-not-allowed' : 'text-gray-900'
                   }`}
                   title={isTimerActive ? "Focus on your current task" : ""}
@@ -45,7 +45,7 @@ function App() {
                 <Link 
                   to="/summary" 
                   onClick={(e) => handleNavigation(e, '/summary')}
-                  className={`flex items-center px-1 pt-1 relative ${
+                  className={`flex items-center px-3 pt-1 font-medium ${
                     isTimerActive ? 'text-gray-400 cursor-not-allowed' : 'text-gray-900'
                   }`}
                   title={isTimerActive ? "Focus on your current task" : ""}
@@ -55,7 +55,7 @@ function App() {
                 <Link 
                   to="/insights" 
                   onClick={(e) => handleNavigation(e, '/insights')}
-                  className={`flex items-center px-1 pt-1 relative ${
+                  className={`flex items-center px-3 pt-1 font-medium ${
                     isTimerActive ? 'text-gray-400 cursor-not-allowed' : 'text-gray-900'
                   }`}
                   title={isTimerActive ? "Focus on your current task" : ""}
