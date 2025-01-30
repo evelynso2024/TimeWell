@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js';
 import { Doughnut, Bar } from 'react-chartjs-2';
 
-ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement); 
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
 function Summary() {
   const [taskStats, setTaskStats] = useState({
@@ -10,14 +10,14 @@ function Summary() {
       labels: ['High', 'Medium', 'Low', 'Unranked'],
       datasets: [{
         data: [0, 0, 0, 0],
-        backgroundColor: ['#4F46E5', '#10B981', '#F59E0B', '#6B7280']
+        backgroundColor: ['#10B981', '#F59E0B', '#EF4444', '#6B7280']  // Changed colors
       }]
     },
     percentages: {
-      labels: ['High', 'Medium', 'Low', 'Unranked'], 
+      labels: ['High', 'Medium', 'Low', 'Unranked'],
       datasets: [{
         data: [0, 0, 0, 0],
-        backgroundColor: ['#4F46E5', '#10B981', '#F59E0B', '#6B7280']
+        backgroundColor: ['#10B981', '#F59E0B', '#EF4444', '#6B7280']  // Changed colors
       }]
     }
   });
@@ -54,7 +54,7 @@ function Summary() {
         labels: ['High', 'Medium', 'Low', 'Unranked'],
         datasets: [{
           data: Object.values(leverageCounts),
-          backgroundColor: ['#4F46E5', '#10B981', '#F59E0B', '#6B7280'],
+          backgroundColor: ['#10B981', '#F59E0B', '#EF4444', '#6B7280'],  // Green, Yellow, Red, Gray
           borderWidth: 0
         }]
       },
@@ -62,7 +62,7 @@ function Summary() {
         labels: ['High', 'Medium', 'Low', 'Unranked'],
         datasets: [{
           data: percentages,
-          backgroundColor: ['#4F46E5', '#10B981', '#F59E0B', '#6B7280'],
+          backgroundColor: ['#10B981', '#F59E0B', '#EF4444', '#6B7280'],  // Green, Yellow, Red, Gray
           borderWidth: 0
         }]
       }
@@ -79,7 +79,7 @@ function Summary() {
         {/* Bar Chart */}
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4">Task Counts by Category</h2>
-          <div className="h-64 flex items-center justify-center">
+          <div className="h-64">
             <Bar 
               data={taskStats.counts}
               options={{
@@ -106,7 +106,7 @@ function Summary() {
         {/* Donut Chart */}
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4">Task Distribution (%)</h2>
-          <div className="h-64 flex items-center justify-center">
+          <div className="h-64">
             <Doughnut 
               data={taskStats.percentages}
               options={{
@@ -114,7 +114,14 @@ function Summary() {
                 maintainAspectRatio: false,
                 plugins: {
                   legend: {
-                    position: 'bottom'
+                    position: 'bottom',
+                    labels: {
+                      usePointStyle: true,
+                      padding: 20,
+                      font: {
+                        size: 12
+                      }
+                    }
                   }
                 }
               }}
