@@ -100,6 +100,16 @@ function Timer({ setIsTimerActive }) {
     setRecentTasks(updatedTasks.slice(-5).reverse());
   };
 
+  const deleteTask = (taskId) => {
+    // Remove from localStorage
+    const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
+    const updatedTasks = allTasks.filter(task => task.id !== taskId);
+    localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
+    
+    // Update recent tasks
+    setRecentTasks(updatedTasks.slice(-5).reverse());
+  };
+
   return (
     <div className="max-w-2xl mx-auto p-6">
       {!isTimerActive ? (
@@ -139,16 +149,24 @@ function Timer({ setIsTimerActive }) {
                         {formatTime(task.duration)}
                       </div>
                     </div>
-                    <select
-                      value={task.leverage || ''}
-                      onChange={(e) => updateTaskLeverage(task.id, e.target.value)}
-                      className="ml-4 p-2 border rounded text-sm bg-white"
-                    >
-                      <option value="">Rank</option>
-                      <option value="High">High leverage</option>
-                      <option value="Medium">Medium leverage</option>
-                      <option value="Low">Low leverage</option>
-                    </select>
+                    <div className="flex items-center space-x-4">
+                      <select
+                        value={task.leverage || ''}
+                        onChange={(e) => updateTaskLeverage(task.id, e.target.value)}
+                        className="p-2 border rounded text-sm bg-white"
+                      >
+                        <option value="">Rank</option>
+                        <option value="High">High leverage</option>
+                        <option value="Medium">Medium leverage</option>
+                        <option value="Low">Low leverage</option>
+                      </select>
+                      <button
+                        onClick={() => deleteTask(task.id)}
+                        className="text-red-500 hover:text-red-700 font-bold"
+                      >
+                        ✕
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
