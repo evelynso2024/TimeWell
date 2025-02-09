@@ -221,16 +221,16 @@ function AllTasks() {
           </div>
 
           <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            className="p-2 border rounded bg-white"
-          >
-            <option value="all">All Tasks</option>
-            <option value="high">High Leverage</option>
-            <option value="medium">Medium Leverage</option>
-            <option value="low">Low Leverage</option>
-          </select>
-
+  value={filterType}
+  onChange={(e) => setFilterType(e.target.value)}
+  className="p-2 border rounded bg-white"
+>
+  <option value="all">All Tasks</option>
+  <option value="high">High impact</option>
+  <option value="medium">Medium impact</option>
+  <option value="low">Low impact</option>
+</select>
+    
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
@@ -294,16 +294,17 @@ function AllTasks() {
                   </div>
                 </div>
                 <div className="flex items-center space-x-4">
-                  <select
-                    value={task.leverage || ''}
-                    onChange={(e) => updateTaskLeverage(task.id, e.target.value)}
-                    className="p-2 border rounded text-sm bg-white"
-                  >
-                    <option value="">Rank</option>
-                    <option value="High">High leverage</option>
-                    <option value="Medium">Medium leverage</option>
-                    <option value="Low">Low leverage</option>
-                  </select>
+
+                      <select
+  value={task.leverage || ''}
+  onChange={(e) => updateTaskLeverage(task.id, e.target.value)}
+  className="p-2 border rounded text-sm bg-white"
+>
+  <option value="">Rank</option>
+  <option value="High">High impact</option>
+  <option value="Medium">Medium impact</option>
+  <option value="Low">Low impact</option>
+</select>
                   <button
                     onClick={() => deleteTask(task.id)}
                     className="text-red-500 hover:text-red-700 font-bold"
