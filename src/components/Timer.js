@@ -68,11 +68,13 @@ function Timer({ setIsTimerActive }) {
     setIsTimerActive(false);
     localStorage.setItem('isTimerActive', 'false');
     
+    const endTime = new Date().toISOString();
     const newTask = {
       id: Date.now(),
       name: task,
       duration: elapsedTime,
-      timestamp: new Date().toISOString(),
+      startTime: new Date(startTime).toISOString(),
+      endTime: endTime,
       leverage: ''
     };
 
@@ -87,8 +89,15 @@ function Timer({ setIsTimerActive }) {
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${Math.floor(mins / 60)}:${(mins % 60).toString().padStart(2, '0')}`;
+  };
+
+  const formatDateTime = (isoString) => {
+    return new Date(isoString).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
   };
 
   const updateTaskLeverage = (taskId, leverage) => {
@@ -146,7 +155,7 @@ function Timer({ setIsTimerActive }) {
                     <div>
                       <div className="font-medium">{task.name}</div>
                       <div className="text-sm text-gray-500">
-                        {formatTime(task.duration)}
+                        {formatTime(task.duration)} • {formatDateTime(task.startTime)} - {formatDateTime(task.endTime)}
                       </div>
                     </div>
                     <div className="flex items-center space-x-4">
