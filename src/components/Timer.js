@@ -7,20 +7,20 @@ function Timer({ setIsTimerActive }) {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [recentTasks, setRecentTasks] = useState([]);
 
-  const playClickSound = () => {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-
+    const playClickSound = () => {
+    const context = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    
     oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-
-    oscillator.start();
-    oscillator.stop(audioContext.currentTime + 0.1);
+    oscillator.frequency.value = 1000;
+    gain.gain.value = 0.1;
+    
+    oscillator.start(context.currentTime);
+    oscillator.stop(context.currentTime + 0.05);
   };
 
   useEffect(() => {
