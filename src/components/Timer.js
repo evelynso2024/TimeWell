@@ -16,12 +16,14 @@ function Timer({ setIsTimerActive }) {
     gain.connect(context.destination);
     
     oscillator.type = 'sine';
-    oscillator.frequency.value = 1000;
-    gain.gain.value = 0.1;
+    oscillator.frequency.value = 200; // Lower frequency for a deeper sound
+    gain.gain.value = 0.15; // Slightly increased volume
     
     oscillator.start(context.currentTime);
-    oscillator.stop(context.currentTime + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.00001, context.currentTime + 0.08); // Smooth fade out
+    oscillator.stop(context.currentTime + 0.08); // Slightly longer duration
   };
+
 
   useEffect(() => {
     const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
