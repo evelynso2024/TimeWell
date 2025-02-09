@@ -24,11 +24,16 @@ function Timer({ setIsTimerActive }) {
     oscillator.stop(context.currentTime + 0.06); // Shorter duration for crisper click
   };
 
-
-  useEffect(() => {
+ useEffect(() => {
     const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-    setRecentTasks(allTasks.slice(-5).reverse());
+    // Sort by most recent first and take only the 5 most recent tasks
+    const recentFiveTasks = allTasks
+      .sort((a, b) => new Date(b.startTime) - new Date(a.startTime))
+      .slice(0, 5);
+    setRecentTasks(recentFiveTasks);
   }, []);
+  
+  
 
   useEffect(() => {
     const storedTimerState = localStorage.getItem('isTimerActive') === 'true';
