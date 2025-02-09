@@ -23,12 +23,12 @@ function AllTasks() {
       endDate.setHours(23, 59, 59, 999); // Include the entire end date
       
       allTasks = allTasks.filter(task => {
-        const taskDate = new Date(task.timestamp);
+        const taskDate = new Date(task.startTime);
         return taskDate >= startDate && taskDate <= endDate;
       });
     } else {
       allTasks = allTasks.filter(task => {
-        const taskDate = new Date(task.timestamp);
+        const taskDate = new Date(task.startTime);
         const hoursDiff = (now - taskDate) / (1000 * 60 * 60);
         
         switch(timeFilter) {
@@ -39,10 +39,10 @@ function AllTasks() {
       });
     }
 
-    // Leverage filter
+    // Impact filter
     if (filterType !== 'all') {
       allTasks = allTasks.filter(task => 
-        task.leverage.toLowerCase() === filterType
+        task.leverage?.toLowerCase() === filterType
       );
     }
 
@@ -50,9 +50,9 @@ function AllTasks() {
     allTasks.sort((a, b) => {
       switch(sortBy) {
         case 'oldest':
-          return new Date(a.timestamp) - new Date(b.timestamp);
+          return new Date(a.startTime) - new Date(b.startTime);
         case 'newest':
-          return new Date(b.timestamp) - new Date(a.timestamp);
+          return new Date(b.startTime) - new Date(a.startTime);
         case 'shortest':
           return a.duration - b.duration;
         case 'longest':
@@ -62,7 +62,7 @@ function AllTasks() {
         case 'nameZA':
           return b.name.localeCompare(a.name);
         default:
-          return new Date(b.timestamp) - new Date(a.timestamp);
+          return new Date(b.startTime) - new Date(a.startTime);
       }
     });
 
@@ -70,14 +70,20 @@ function AllTasks() {
     setSelectedTasks(new Set());
   };
 
-  const formatDuration = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    return `${mins} min${mins !== 1 ? 's' : ''}`;
+  const formatTime = (seconds) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const formatTimestamp = (timestamp) => {
-    const date = new Date(timestamp);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+  const formatDateTime = (isoString) => {
+    if (!isoString) return '';
+    return new Date(isoString).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
   };
 
   const toggleSelectAll = () => {
@@ -221,16 +227,16 @@ function AllTasks() {
           </div>
 
           <select
-  value={filterType}
-  onChange={(e) => setFilterType(e.target.value)}
-  className="p-2 border rounded bg-white"
->
-  <option value="all">All Tasks</option>
-  <option value="high">High impact</option>
-  <option value="medium">Medium impact</option>
-  <option value="low">Low impact</option>
-</select>
-    
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            className="p-2 border rounded bg-white"
+          >
+            <option value="all">All Tasks</option>
+            <option value="high">High impact</option>
+            <option value="medium">Medium impact</option>
+            <option value="low">Low impact</option>
+          </select>
+
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
@@ -248,7 +254,7 @@ function AllTasks() {
           </select>
         </div>
 
-        {/* Only show Bulk Actions Row if there are tasks */}
+        {/* Bulk Actions Row */}
         {tasks.length > 0 && (
           <div className="flex items-center space-x-4">
             <input
@@ -286,25 +292,23 @@ function AllTasks() {
                     className="h-4 w-4 text-blue-600 mr-4"
                   />
                   <div>
-                    <div className="font-medium text-gray-800">{task.name}</div>
+                    <div className="font-medium">{task.name}</div>
                     <div className="text-sm text-gray-500">
-                      <span className="mr-4">{formatDuration(task.duration)}</span>
-                      <span>{formatTimestamp(task.timestamp)}</span>
+                      {formatTime(task.duration)} • {formatDateTime(task.startTime)} - {formatDateTime(task.endTime)}
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-4">
-
-                      <select
-  value={task.leverage || ''}
-  onChange={(e) => updateTaskLeverage(task.id, e.target.value)}
-  className="p-2 border rounded text-sm bg-white"
->
-  <option value="">Rank</option>
-  <option value="High">High impact</option>
-  <option value="Medium">Medium impact</option>
-  <option value="Low">Low impact</option>
-</select>
+                  <select
+                    value={task.leverage || ''}
+                    onChange={(e) => updateTaskLeverage(task.id, e.target.value)}
+                    className="p-2 border rounded text-sm bg-white"
+                  >
+                    <option value="">Rank</option>
+                    <option value="High">High impact</option>
+                    <option value="Medium">Medium impact</option>
+                    <option value="Low">Low impact</option>
+                  </select>
                   <button
                     onClick={() => deleteTask(task.id)}
                     className="text-red-500 hover:text-red-700 font-bold"
