@@ -38,9 +38,10 @@ function Timer({ setIsTimerActive }) {
 
   useEffect(() => {
     let intervalId;
-    if (isTimerActive) {
+    if (isTimerActive && startTime) {
       intervalId = setInterval(() => {
-        setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
+        const currentElapsed = Math.floor((Date.now() - startTime) / 1000);
+        setElapsedTime(currentElapsed);
       }, 1000);
     }
     return () => clearInterval(intervalId);
@@ -49,9 +50,10 @@ function Timer({ setIsTimerActive }) {
   const startTimer = () => {
     if (task.trim()) {
       playClickSound();
+      const now = Date.now();
+      setStartTime(now);
       setIsTimerLocalActive(true);
       setIsTimerActive(true);
-      setStartTime(Date.now());
       localStorage.setItem('isTimerActive', 'true');
     }
   };
@@ -73,7 +75,7 @@ function Timer({ setIsTimerActive }) {
       id: Date.now(),
       name: task,
       duration: elapsedTime,
-      startTime: new Date(startTime).toISOString(),
+      startTime: startTime ? new Date(startTime).toISOString() : null,
       endTime: endTime,
       leverage: ''
     };
@@ -89,14 +91,16 @@ function Timer({ setIsTimerActive }) {
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
-    return `${Math.floor(mins / 60)}:${(mins % 60).toString().padStart(2, '0')}`;
+    const remainingMins = mins % 60;
+    return `${Math.floor(mins / 60)}:${remainingMins.toString().padStart(2, '0')}`;
   };
 
   const formatDateTime = (isoString) => {
+    if (!isoString) return ''; // Handle missing timestamps for old records
     return new Date(isoString).toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
-      hour12: false
+      hour12: true
     });
   };
 
