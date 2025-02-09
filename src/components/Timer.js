@@ -16,12 +16,12 @@ function Timer({ setIsTimerActive }) {
     gain.connect(context.destination);
     
     oscillator.type = 'sine';
-    oscillator.frequency.value = 200; // Lower frequency for a deeper sound
-    gain.gain.value = 0.15; // Slightly increased volume
+    oscillator.frequency.value = 400; // Higher frequency for clearer sound
+    gain.gain.value = 0.4; // Increased volume
     
     oscillator.start(context.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.00001, context.currentTime + 0.08); // Smooth fade out
-    oscillator.stop(context.currentTime + 0.08); // Slightly longer duration
+    gain.gain.exponentialRampToValueAtTime(0.00001, context.currentTime + 0.06); // Faster fade out
+    oscillator.stop(context.currentTime + 0.06); // Shorter duration for crisper click
   };
 
 
