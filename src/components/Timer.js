@@ -21,7 +21,6 @@ function Timer({ setIsTimerActive }) {
     gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
 
     oscillator.start();
-    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 0.1);
     oscillator.stop(audioContext.currentTime + 0.1);
   };
 
@@ -169,10 +168,10 @@ function Timer({ setIsTimerActive }) {
                         onChange={(e) => updateTaskLeverage(task.id, e.target.value)}
                         className="p-2 border rounded text-sm bg-white"
                       >
-                        <option value="">Rank</option>
-                        <option value="High">High leverage</option>
-                        <option value="Medium">Medium leverage</option>
-                        <option value="Low">Low leverage</option>
+                        <option value="">Impact</option>
+                        <option value="High">High impact</option>
+                        <option value="Medium">Medium impact</option>
+                        <option value="Low">Low impact</option>
                       </select>
                       <button
                         onClick={() => deleteTask(task.id)}
