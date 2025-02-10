@@ -23,12 +23,12 @@ function AllTasks() {
       endDate.setHours(23, 59, 59, 999); // Include the entire end date
       
       allTasks = allTasks.filter(task => {
-        const taskDate = new Date(task.startTime);
+        const taskDate = new Date(task.timestamp);
         return taskDate >= startDate && taskDate <= endDate;
       });
     } else {
       allTasks = allTasks.filter(task => {
-        const taskDate = new Date(task.startTime);
+        const taskDate = new Date(task.timestamp);
         const hoursDiff = (now - taskDate) / (1000 * 60 * 60);
         
         switch(timeFilter) {
@@ -144,7 +144,7 @@ function AllTasks() {
   }, []);
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-2xl mx-auto p-6">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800">What you've done</h1>
       </div>
