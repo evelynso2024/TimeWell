@@ -23,12 +23,12 @@ function AllTasks() {
       endDate.setHours(23, 59, 59, 999); // Include the entire end date
       
       allTasks = allTasks.filter(task => {
-        const taskDate = new Date(task.timestamp);
+        const taskDate = new Date(task.startTime || task.timestamp);
         return taskDate >= startDate && taskDate <= endDate;
       });
     } else {
       allTasks = allTasks.filter(task => {
-        const taskDate = new Date(task.timestamp);
+        const taskDate = new Date(task.startTime || task.timestamp);
         const hoursDiff = (now - taskDate) / (1000 * 60 * 60);
         
         switch(timeFilter) {
@@ -50,9 +50,9 @@ function AllTasks() {
     allTasks.sort((a, b) => {
       switch(sortBy) {
         case 'oldest':
-          return new Date(a.startTime) - new Date(b.startTime);
+          return new Date(a.startTime || a.timestamp) - new Date(b.startTime || b.timestamp);
         case 'newest':
-          return new Date(b.startTime) - new Date(a.startTime);
+          return new Date(b.startTime || b.timestamp) - new Date(a.startTime || a.timestamp);
         case 'shortest':
           return a.duration - b.duration;
         case 'longest':
@@ -62,7 +62,7 @@ function AllTasks() {
         case 'nameZA':
           return b.name.localeCompare(a.name);
         default:
-          return new Date(b.startTime) - new Date(a.startTime);
+          return new Date(b.startTime || b.timestamp) - new Date(a.startTime || a.timestamp);
       }
     });
 
