@@ -17,7 +17,7 @@ function Summary() {
     // Analyze hours
     const hourCounts = {};
     allTasks.forEach(task => {
-      const hour = new Date(task.timestamp).getHours();
+      const hour = new Date(task.startTime || task.timestamp).getHours();
       hourCounts[hour] = (hourCounts[hour] || 0) + 1;
     });
 
@@ -25,7 +25,7 @@ function Summary() {
     const highLeverageTasks = allTasks.filter(task => task.leverage === 'High');
     const highLeverageHours = {};
     highLeverageTasks.forEach(task => {
-      const hour = new Date(task.timestamp).getHours();
+      const hour = new Date(task.startTime || task.timestamp).getHours();
       highLeverageHours[hour] = (highLeverageHours[hour] || 0) + 1;
     });
 
@@ -54,15 +54,15 @@ function Summary() {
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-xl font-semibold mb-6 text-gray-800">Time Patterns</h2>
         <div className="space-y-6">
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <p className="text-blue-800">
+          <div className="bg-gray-900 p-4 rounded-lg">
+            <p className="text-white">
               <span className="font-medium">Peak Productivity Hour:</span> You're most productive at {insights.mostProductiveHour}. 
               Consider scheduling important tasks during this time.
             </p>
           </div>
 
-          <div className="bg-purple-50 p-4 rounded-lg">
-            <p className="text-purple-800">
+          <div className="bg-indigo-900 p-4 rounded-lg">
+            <p className="text-white">
               <span className="font-medium">High-Impact Tasks:</span> You handle important tasks best at {insights.highLeverageTime}. 
               Consider protecting this time slot for focused work.
             </p>
