@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 
 function Timer({ setIsTimerActive }) {
   const [isTimerActive, setIsTimerLocalActive] = useState(false);
@@ -6,12 +6,6 @@ function Timer({ setIsTimerActive }) {
   const [startTime, setStartTime] = useState(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [recentTasks, setRecentTasks] = useState([]);
-  
-  // Add new state for draggable widget
-  const [position, setPosition] = useState({ x: window.innerWidth - 400, y: 16 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const timerRef = useRef(null);
 
   const playClickSound = () => {
     const context = new (window.AudioContext || window.webkitAudioContext)();
@@ -54,39 +48,6 @@ function Timer({ setIsTimerActive }) {
     }
     return () => clearInterval(intervalId);
   }, [isTimerActive, startTime]);
-
-  // Add drag handlers
-  const handleMouseDown = (e) => {
-    if (timerRef.current && e.target === timerRef.current.firstChild) {
-      setIsDragging(true);
-      setDragOffset({
-        x: e.clientX - position.x,
-        y: e.clientY - position.y
-      });
-    }
-  };
-
-  const handleMouseMove = (e) => {
-    if (isDragging) {
-      setPosition({
-        x: e.clientX - dragOffset.x,
-        y: e.clientY - dragOffset.y
-      });
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  useEffect(() => {
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging, dragOffset]);
 
   const startTimer = () => {
     if (task.trim()) {
@@ -163,24 +124,10 @@ function Timer({ setIsTimerActive }) {
   };
 
   return (
-    <div
-      ref={timerRef}
-      className="fixed z-50"
-      style={{
-        left: `${position.x}px`,
-        top: `${position.y}px`,
-        width: '384px',
-        cursor: isDragging ? 'grabbing' : 'grab'
-      }}
-      onMouseDown={handleMouseDown}
-    >
-      <div className="bg-gray-200 p-2 rounded-t-lg cursor-grab">
-        <div className="w-16 h-1 bg-gray-400 mx-auto rounded-full"></div>
-      </div>
-
+    <div className="max-w-2xl mx-auto p-6">
       {!isTimerActive ? (
         <>
-          <div className="bg-white rounded-b-lg shadow p-6 mb-6">
+          <div className="bg-white rounded-lg shadow p-6 mb-6">
             <input
               type="text"
               value={task}
@@ -240,7 +187,7 @@ function Timer({ setIsTimerActive }) {
           </div>
         </>
       ) : (
-        <div className="bg-white rounded-b-lg shadow p-6 text-center">
+        <div className="bg-white rounded-lg shadow p-6 text-center">
           <div className="text-4xl font-bold mb-4 text-gray-800">
             {task}
           </div>
