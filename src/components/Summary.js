@@ -1,131 +1,71 @@
 import React, { useState, useEffect } from 'react';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js';
-import { Doughnut, Bar } from 'react-chartjs-2';
-
-ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
 function Summary() {
-  const [taskStats, setTaskStats] = useState({
-    counts: {
-      labels: ['High', 'Medium', 'Low', 'Unranked'],
-      datasets: [{
-        data: [0, 0, 0, 0],
-        backgroundColor: ['#10B981', '#F59E0B', '#EF4444', '#6B7280']  // Changed colors
-      }]
-    },
-    percentages: {
-      labels: ['High', 'Medium', 'Low', 'Unranked'],
-      datasets: [{
-        data: [0, 0, 0, 0],
-        backgroundColor: ['#10B981', '#F59E0B', '#EF4444', '#6B7280']  // Changed colors
-      }]
-    }
+  const [insights, setInsights] = useState({
+    mostProductiveHour: '',
+    highLeverageTime: ''
   });
 
   useEffect(() => {
-    calculateStats();
+    analyzeProductivity();
   }, []);
 
-  const calculateStats = () => {
+  const analyzeProductivity = () => {
     const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-    
-    const leverageCounts = {
-      'High': 0,
-      'Medium': 0,
-      'Low': 0,
-      'Unranked': 0
-    };
+    if (allTasks.length === 0) return;
 
+    // Analyze hours
+    const hourCounts = {};
     allTasks.forEach(task => {
-      if (!task.leverage) {
-        leverageCounts['Unranked']++;
-      } else {
-        leverageCounts[task.leverage]++;
-      }
+      const hour = new Date(task.startTime || task.timestamp).getHours();
+      hourCounts[hour] = (hourCounts[hour] || 0) + 1;
     });
 
-    const total = allTasks.length;
-    const percentages = Object.values(leverageCounts).map(count => 
-      total > 0 ? Math.round((count / total) * 100) : 0
-    );
+    // Analyze high leverage tasks
+    const highLeverageTasks = allTasks.filter(task => task.leverage === 'High');
+    const highLeverageHours = {};
+    highLeverageTasks.forEach(task => {
+      const hour = new Date(task.startTime || task.timestamp).getHours();
+      highLeverageHours[hour] = (highLeverageHours[hour] || 0) + 1;
+    });
 
-    setTaskStats({
-      counts: {
-        labels: ['High', 'Medium', 'Low', 'Unranked'],
-        datasets: [{
-          data: Object.values(leverageCounts),
-          backgroundColor: ['#10B981', '#F59E0B', '#EF4444', '#6B7280'],  // Green, Yellow, Red, Gray
-          borderWidth: 0
-        }]
-      },
-      percentages: {
-        labels: ['High', 'Medium', 'Low', 'Unranked'],
-        datasets: [{
-          data: percentages,
-          backgroundColor: ['#10B981', '#F59E0B', '#EF4444', '#6B7280'],  // Green, Yellow, Red, Gray
-          borderWidth: 0
-        }]
-      }
+    setInsights({
+      mostProductiveHour: formatHour(parseInt(Object.keys(hourCounts).reduce((a, b) => 
+        hourCounts[a] > hourCounts[b] ? a : b
+      ))),
+      highLeverageTime: highLeverageTasks.length > 0 ? formatHour(parseInt(Object.keys(highLeverageHours).reduce((a, b) => 
+        highLeverageHours[a] > highLeverageHours[b] ? a : b
+      ))) : 'Not enough data'
     });
   };
 
+  const formatHour = (hour) => {
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12;
+    return `${hour12}${ampm}`;
+  };
+
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-2xl mx-auto p-6">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Task Summary</h1>
+        <h1 className="text-3xl font-bold text-gray-800">Your Productivity Insights</h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Bar Chart */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Task Counts by Category</h2>
-          <div className="h-64">
-            <Bar 
-              data={taskStats.counts}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                  legend: {
-                    display: false
-                  }
-                },
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                    ticks: {
-                      stepSize: 1
-                    }
-                  }
-                }
-              }}
-            />
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-xl font-semibold mb-6 text-gray-800">Time Patterns</h2>
+        <div className="space-y-6">
+          <div className="bg-gray-900 p-4 rounded-lg">
+            <p className="text-white">
+              <span className="font-medium">Peak Productivity Hour:</span> You're most productive at {insights.mostProductiveHour}. 
+              Consider scheduling important tasks during this time.
+            </p>
           </div>
-        </div>
 
-        {/* Donut Chart */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Task Distribution (%)</h2>
-          <div className="h-64">
-            <Doughnut 
-              data={taskStats.percentages}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                  legend: {
-                    position: 'bottom',
-                    labels: {
-                      usePointStyle: true,
-                      padding: 20,
-                      font: {
-                        size: 12
-                      }
-                    }
-                  }
-                }
-              }}
-            />
+          <div className="bg-indigo-900 p-4 rounded-lg">
+            <p className="text-white">
+              <span className="font-medium">High-Impact Tasks:</span> You handle important tasks best at {insights.highLeverageTime}. 
+              Consider protecting this time slot for focused work.
+            </p>
           </div>
         </div>
       </div>
