@@ -4,6 +4,8 @@ import Timer from './components/Timer';
 import AllTasks from './components/AllTasks';
 import Summary from './components/Summary';
 import Insights from './components/Insights';
+import Login from './components/Auth/Login';
+import SignUp from './components/Auth/SignUp';
 
 function App() {
   const [isTimerActive, setIsTimerActive] = useState(false);
@@ -24,11 +26,11 @@ function App() {
       <div className="min-h-screen bg-gray-100">
         <nav className="bg-white shadow-sm">
           <div className="max-w-7xl mx-auto px-4">
-            <div className="flex justify-center h-16"> {/* Changed to justify-center */}
-              <div className="flex space-x-12"> {/* Increased space-x to 12 for better spacing */}
+            <div className="flex justify-center h-16">
+              <div className="flex space-x-12">
                 <Link 
                   to="/" 
-                  className="flex items-center px-3 pt-1 text-gray-900 font-medium" /* Added padding and font-medium */
+                  className="flex items-center px-3 pt-1 text-gray-900 font-medium"
                 >
                   Timer
                 </Link>
@@ -68,6 +70,8 @@ function App() {
         </nav>
 
         <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
           <Route path="/" element={<Timer setIsTimerActive={setIsTimerActive} />} />
           <Route path="/all-tasks" element={<AllTasks />} />
           <Route path="/summary" element={<Summary />} />
