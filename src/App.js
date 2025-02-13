@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-ro
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import Timer from './components/Timer';
 import AllTasks from './components/AllTasks';
-import Summary from './components/Summary';
+import Summary from './components/Summary'; 
 import Insights from './components/Insights';
 import Login from './components/Auth/Login';
 import SignUp from './components/Auth/SignUp';
