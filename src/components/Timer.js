@@ -1,209 +1,156 @@
 import React, { useState, useEffect } from 'react';
 
 function Timer({ setIsTimerActive }) {
-  const [isTimerActive, setIsTimerLocalActive] = useState(false);
   const [task, setTask] = useState('');
-  const [startTime, setStartTime] = useState(null);
-  const [elapsedTime, setElapsedTime] = useState(0);
-  const [recentTasks, setRecentTasks] = useState([]);
-
-  const playClickSound = () => {
-    const context = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    
-    oscillator.connect(gain);
-    gain.connect(context.destination);
-    
-    oscillator.type = 'sine';
-    oscillator.frequency.value = 400;
-    gain.gain.value = 0.4;
-    
-    oscillator.start(context.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.00001, context.currentTime + 0.06);
-    oscillator.stop(context.currentTime + 0.06);
-  };
-
-  useEffect(() => {
-    const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-    const recentFiveTasks = allTasks
-      .sort((a, b) => new Date(b.startTime) - new Date(a.startTime))
-      .slice(0, 5);
-    setRecentTasks(recentFiveTasks);
-  }, []);
-
-  useEffect(() => {
-    const storedTimerState = localStorage.getItem('isTimerActive') === 'true';
-    setIsTimerLocalActive(storedTimerState);
-    setIsTimerActive(storedTimerState);
-  }, [setIsTimerActive]);
-
-  useEffect(() => {
-    let intervalId;
-    if (isTimerActive && startTime) {
-      intervalId = setInterval(() => {
-        const currentElapsed = Math.floor((Date.now() - startTime) / 1000);
-        setElapsedTime(currentElapsed);
-      }, 1000);
-    }
-    return () => clearInterval(intervalId);
-  }, [isTimerActive, startTime]);
+  const [popupWindow, setPopupWindow] = useState(null);
+  const [tasks, setTasks] = useState([]);
 
   const startTimer = () => {
-    if (task.trim()) {
-      playClickSound();
-      const now = Date.now();
-      setStartTime(now);
-      setIsTimerLocalActive(true);
-      setIsTimerActive(true);
-      localStorage.setItem('isTimerActive', 'true');
+    if (!task.trim()) {
+      alert('Please enter a task first');
+      return;
     }
+
+    const startTime = new Date();
+    const popup = window.open(
+      '',
+      'TimeWell Timer',
+      'width=300,height=250,resizable=yes'
+    );
+
+    popup.document.write(`
+      <html>
+        <head>
+          <title>TimeWell Timer</title>
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+              padding: 20px;
+              text-align: center;
+              background-color: white;
+            }
+            .timer {
+              font-size: 48px;
+              font-weight: bold;
+              margin: 20px 0;
+            }
+            .task {
+              color: #666;
+              margin: 15px 0;
+              font-size: 16px;
+              padding: 0 10px;
+              word-wrap: break-word;
+            }
+            .end-btn {
+              background-color: #DC2626;
+              color: white;
+              border: none;
+              padding: 8px 16px;
+              border-radius: 4px;
+              cursor: pointer;
+              font-size: 14px;
+            }
+            .end-btn:hover {
+              background-color: #B91C1C;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="timer" id="timer">25:00</div>
+          <div class="task">${task}</div>
+          <button class="end-btn" onclick="endTimer()">End Timer</button>
+          <script>
+            let startTime = new Date();
+            let timerInterval;
+            
+            function updateTimer() {
+              const now = new Date();
+              const elapsed = Math.floor((now - startTime) / 1000);
+              const minutes = Math.floor(elapsed / 60);
+              const seconds = elapsed % 60;
+              document.getElementById('timer').textContent = 
+                minutes.toString().padStart(2, '0') + ':' + 
+                seconds.toString().padStart(2, '0');
+            }
+
+            function endTimer() {
+              clearInterval(timerInterval);
+              const endTime = new Date();
+              const duration = Math.floor((endTime - startTime) / 1000);
+              window.opener.handleTimerEnd(duration);
+              window.close();
+            }
+
+            timerInterval = setInterval(updateTimer, 1000);
+            
+            window.onbeforeunload = function() {
+              clearInterval(timerInterval);
+            }
+          </script>
+        </body>
+      </html>
+    `);
+
+    setPopupWindow(popup);
+    setIsTimerActive(true);
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && task.trim()) {
-      startTimer();
-    }
-  };
+  const handleTimerEnd = (duration) => {
+    const minutes = Math.floor(duration / 60);
+    const seconds = duration % 60;
+    const timeSpent = `${minutes}m ${seconds}s`;
 
-  const endTimer = () => {
-    playClickSound();
-    setIsTimerLocalActive(false);
-    setIsTimerActive(false);
-    localStorage.setItem('isTimerActive', 'false');
-    
-    const endTime = new Date().toISOString();
+    // Add completed task to log
     const newTask = {
-      id: Date.now(),
       name: task,
-      duration: elapsedTime,
-      startTime: startTime ? new Date(startTime).toISOString() : null,
-      endTime: endTime,
-      leverage: ''
+      timeSpent,
+      completedAt: new Date().toLocaleString()
     };
 
-    const existingTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-    localStorage.setItem('allTasks', JSON.stringify([...existingTasks, newTask]));
+    setTasks(prevTasks => [...prevTasks, newTask]);
     
+    // Reset states
+    setIsTimerActive(false);
+    setPopupWindow(null);
     setTask('');
-    setElapsedTime(0);
-    setStartTime(null);
-    setRecentTasks([newTask, ...recentTasks.slice(0, 4)]);
   };
 
-  const formatTime = (seconds) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const formatDateTime = (isoString) => {
-    if (!isoString) return '';
-    return new Date(isoString).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
-
-  const updateTaskLeverage = (taskId, leverage) => {
-    const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-    const updatedTasks = allTasks.map(task => 
-      task.id === taskId ? { ...task, leverage } : task
-    );
-    localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
-    setRecentTasks(updatedTasks.slice(-5).reverse());
-  };
-
-  const deleteTask = (taskId) => {
-    const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-    const updatedTasks = allTasks.filter(task => task.id !== taskId);
-    localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
-    setRecentTasks(updatedTasks.slice(-5).reverse());
-  };
+  // Attach handleTimerEnd to window object so popup can call it
+  window.handleTimerEnd = handleTimerEnd;
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      {!isTimerActive ? (
-        <>
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <input
-              type="text"
-              value={task}
-              onChange={(e) => setTask(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="What are you working on?"
-              className="w-full p-4 text-xl border rounded mb-4"
-              autoFocus
-            />
-            <button
-              onClick={startTimer}
-              disabled={!task.trim()}
-              className={`w-full p-4 rounded text-white text-xl
-                ${task.trim() ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-300'}`}
-            >
-              Start Timer
-            </button>
-          </div>
+    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-lg">
+      <h2 className="text-2xl font-bold mb-4 text-center">TimeWell</h2>
+      
+      <div className="mb-4">
+        <input
+          type="text"
+          value={task}
+          onChange={(e) => setTask(e.target.value)}
+          placeholder="What are you working on?"
+          className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">Recent Tasks</h2>
-            <div className="space-y-4">
-              <ul className="space-y-3">
-                {recentTasks.map((task) => (
-                  <li 
-                    key={task.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded"
-                  >
-                    <div>
-                      <div className="font-medium">{task.name}</div>
-                      <div className="text-sm text-gray-500">
-                        {formatTime(task.duration)} • {formatDateTime(task.startTime)} - {formatDateTime(task.endTime)}
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <select
-                        value={task.leverage || ''}
-                        onChange={(e) => updateTaskLeverage(task.id, e.target.value)}
-                        className="p-2 border rounded text-sm bg-white"
-                      >
-                        <option value="">Rank</option>
-                        <option value="High">High impact</option>
-                        <option value="Medium">Medium impact</option>
-                        <option value="Low">Low impact</option>
-                      </select>
-                      <button
-                        onClick={() => deleteTask(task.id)}
-                        className="text-red-500 hover:text-red-700 font-bold"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+      <button
+        onClick={startTimer}
+        className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+      >
+        Start Timer
+      </button>
+
+      {/* Task Log */}
+      <div className="mt-8">
+        <h3 className="text-lg font-semibold mb-2">Completed Tasks</h3>
+        {tasks.map((completedTask, index) => (
+          <div key={index} className="bg-gray-50 p-3 rounded-md mb-2">
+            <div className="font-medium">{completedTask.name}</div>
+            <div className="text-sm text-gray-600">
+              Time: {completedTask.timeSpent} • {completedTask.completedAt}
             </div>
           </div>
-        </>
-      ) : (
-        <div className="bg-white rounded-lg shadow p-6 text-center">
-          <div className="text-4xl font-bold mb-4 text-gray-800">
-            {task}
-          </div>
-          <div className="text-3xl font-mono mb-6 text-gray-600">
-            {formatTime(elapsedTime)}
-          </div>
-          <div className="flex justify-center">
-            <button
-              onClick={endTimer}
-              className="w-1/3 bg-red-500 text-white px-8 py-3 rounded hover:bg-red-600"
-            >
-              End Timer
-            </button>
-          </div>
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   );
 }
