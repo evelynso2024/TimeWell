@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { auth } from './firebase';
+import { signOut } from 'firebase/auth';
 import Timer from './components/Timer';
 import AllTasks from './components/AllTasks';
 import Summary from './components/Summary';
@@ -9,15 +11,32 @@ import SignUp from './components/auth/SignUp';
 
 function App() {
   const [isTimerActive, setIsTimerActive] = useState(false);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const timerState = localStorage.getItem('isTimerActive');
     setIsTimerActive(timerState === 'true');
+
+    // Listen for auth state changes
+    const unsubscribe = auth.onAuthStateChanged(user => {
+      setUser(user);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const handleNavigation = (e, path) => {
     if (isTimerActive && path !== '/') {
       e.preventDefault();
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      // User is automatically redirected to home page
+    } catch (error) {
+      console.error('Logout error:', error);
     }
   };
 
@@ -65,19 +84,27 @@ function App() {
                   Insights
                 </Link>
               </div>
-              <div className="flex space-x-4">
-                <Link 
-                  to="/login" 
-                  className="flex items-center px-3 pt-1 text-gray-900 font-medium"
-                >
-                  Login
-                </Link>
-                <Link 
-                  to="/signup" 
-                  className="flex items-center px-3 pt-1 text-gray-900 font-medium"
-                >
-                  Sign Up
-                </Link>
+              <div className="flex items-center space-x-4">
+                {user ? (
+                  <>
+                    <span className="text-gray-700">{user.email}</span>
+                    <button
+                      onClick={handleLogout}
+                      className="text-gray-700 hover:text-gray-900 font-medium"
+                    >
+                      Logout
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/login" className="text-gray-700 hover:text-gray-900 font-medium">
+                      Login
+                    </Link>
+                    <Link to="/signup" className="text-gray-700 hover:text-gray-900 font-medium">
+                      Sign Up
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>
