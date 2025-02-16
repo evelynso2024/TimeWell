@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { useNavigate, Link } from 'react-router-dom';
+import { auth } from '../../firebase';
 
 function SignUp() {
   const [email, setEmail] = useState('');
@@ -10,14 +11,11 @@ function SignUp() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    
     try {
-      const auth = getAuth();
       await createUserWithEmailAndPassword(auth, email, password);
-      navigate('/'); // Redirect to home page after successful signup
+      navigate('/');
     } catch (error) {
-      console.error('Signup error:', error); // This will show the detailed error in console
+      console.error('Signup error:', error);
       setError('Failed to create an account: ' + error.message);
     }
   };
