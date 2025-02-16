@@ -26,8 +26,8 @@ function App() {
       <div className="min-h-screen bg-gray-100">
         <nav className="bg-white shadow-sm">
           <div className="max-w-7xl mx-auto px-4">
-            <div className="flex justify-center h-16">
-              <div className="flex space-x-12">
+            <div className="flex justify-between h-16">
+              <div className="flex space-x-8">
                 <Link 
                   to="/" 
                   className="flex items-center px-3 pt-1 text-gray-900 font-medium"
@@ -63,6 +63,20 @@ function App() {
                   title={isTimerActive ? "Focus on your current task" : ""}
                 >
                   Insights
+                </Link>
+              </div>
+              <div className="flex space-x-4">
+                <Link 
+                  to="/login" 
+                  className="flex items-center px-3 pt-1 text-gray-900 font-medium"
+                >
+                  Login
+                </Link>
+                <Link 
+                  to="/signup" 
+                  className="flex items-center px-3 pt-1 text-gray-900 font-medium"
+                >
+                  Sign Up
                 </Link>
               </div>
             </div>
