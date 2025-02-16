@@ -4,8 +4,8 @@ import Timer from './components/Timer';
 import AllTasks from './components/AllTasks';
 import Summary from './components/Summary';
 import Insights from './components/Insights';
-import Login from './components/Auth/Login';
-import SignUp from './components/Auth/SignUp';
+import Login from './components/auth/Login';
+import SignUp from './components/auth/SignUp';
 
 function App() {
   const [isTimerActive, setIsTimerActive] = useState(false);
