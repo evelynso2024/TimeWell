@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import { db } from '../firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { useAuth } from '../contexts/AuthContext';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -8,51 +11,64 @@ function Insights() {
   const [hourlyData, setHourlyData] = useState({});
   const [mostProductiveHour, setMostProductiveHour] = useState(null);
   const [totalHighImpactTime, setTotalHighImpactTime] = useState(0);
+  const { currentUser } = useAuth();
 
   useEffect(() => {
-    analyzeHourlyPatterns();
-  }, []);
-
-  const analyzeHourlyPatterns = () => {
-    const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-    const hourlyStats = {};
-    let totalHigh = 0;
-    
-    // Initialize hourly slots (0-23)
-    for (let i = 0; i < 24; i++) {
-      hourlyStats[i] = {
-        high: 0,
-        medium: 0,
-        low: 0
-      };
+    if (currentUser) {
+      analyzeHourlyPatterns();
     }
+  }, [currentUser]);
 
-    allTasks.forEach(task => {
-      if (task.completed && task.startTime && task.duration) {
-        const hour = new Date(task.startTime).getHours();
-        const impact = task.leverage?.toLowerCase() || 'low';
-        hourlyStats[hour][impact] += task.duration;
+  const analyzeHourlyPatterns = async () => {
+    try {
+      const tasksRef = collection(db, 'tasks');
+      const q = query(tasksRef, where('userId', '==', currentUser.uid));
+      const querySnapshot = await getDocs(q);
+      
+      const hourlyStats = {};
+      let totalHigh = 0;
+      
+      // Initialize hourly slots (0-23)
+      for (let i = 0; i < 24; i++) {
+        hourlyStats[i] = {
+          high: 0,
+          medium: 0,
+          low: 0
+        };
+      }
 
-        if (impact === 'high') {
-          totalHigh += task.duration;
+      querySnapshot.forEach((doc) => {
+        const task = doc.data();
+        if (task.completed && task.startTime && task.duration) {
+          // Convert Firebase Timestamp to Date
+          const startTime = task.startTime.toDate();
+          const hour = startTime.getHours();
+          const impact = task.leverage?.toLowerCase() || 'low';
+          hourlyStats[hour][impact] += task.duration;
+
+          if (impact === 'high') {
+            totalHigh += task.duration;
+          }
         }
-      }
-    });
+      });
 
-    // Find most productive hour (highest high-impact time)
-    let maxHighImpactTime = 0;
-    let mostProductiveHr = 0;
-    
-    Object.entries(hourlyStats).forEach(([hour, stats]) => {
-      if (stats.high > maxHighImpactTime) {
-        maxHighImpactTime = stats.high;
-        mostProductiveHr = parseInt(hour);
-      }
-    });
+      // Find most productive hour (highest high-impact time)
+      let maxHighImpactTime = 0;
+      let mostProductiveHr = 0;
+      
+      Object.entries(hourlyStats).forEach(([hour, stats]) => {
+        if (stats.high > maxHighImpactTime) {
+          maxHighImpactTime = stats.high;
+          mostProductiveHr = parseInt(hour);
+        }
+      });
 
-    setHourlyData(hourlyStats);
-    setMostProductiveHour(mostProductiveHr);
-    setTotalHighImpactTime(totalHigh);
+      setHourlyData(hourlyStats);
+      setMostProductiveHour(mostProductiveHr);
+      setTotalHighImpactTime(totalHigh);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    }
   };
 
   const formatHour = (hour) => {
