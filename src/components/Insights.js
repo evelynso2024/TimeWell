@@ -1,17 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-import { Bar } from 'react-chartjs-2';
 import { auth } from '../firebase';
 import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
-
 function Insights() {
-  const [timeData, setTimeData] = useState({});
   const [insights, setInsights] = useState({
     mostProductiveTime: '',
     totalHighImpactHours: 0,
-    peakHour: ''
+    peakHour: '',
+    totalTasks: 0
   });
 
   useEffect(() => {
@@ -36,6 +32,7 @@ function Insights() {
       let totalHighImpactMinutes = 0;
       let maxHighImpactMinutes = 0;
       let peakHour = 0;
+      let completedTasks = 0;
 
       querySnapshot.forEach((doc) => {
         const task = doc.data();
@@ -45,6 +42,7 @@ function Insights() {
           
           hourlyData[hour].high += duration;
           totalHighImpactMinutes += duration;
+          completedTasks++;
 
           if (hourlyData[hour].high > maxHighImpactMinutes) {
             maxHighImpactMinutes = hourlyData[hour].high;
@@ -53,11 +51,11 @@ function Insights() {
         }
       });
 
-      setTimeData(hourlyData);
       setInsights({
         mostProductiveTime: getPeriodOfDay(peakHour),
         totalHighImpactHours: Math.round(totalHighImpactMinutes / 60 * 10) / 10,
-        peakHour: formatHour(peakHour)
+        peakHour: formatHour(peakHour),
+        totalTasks: completedTasks
       });
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -75,82 +73,49 @@ function Insights() {
     return `${hour % 12 || 12}${hour < 12 ? 'AM' : 'PM'}`;
   };
 
-  const chartData = {
-    labels: Array.from({length: 24}, (_, i) => formatHour(i)),
-    datasets: [{
-      label: 'High Impact Activities',
-      data: Object.values(timeData).map(h => h.high || 0),
-      backgroundColor: '#d45d5d',  // muted red
-      borderRadius: 6,
-    }]
-  };
-
-  const options = {
-    responsive: true,
-    scales: {
-      y: {
-        beginAtZero: true,
-        title: {
-          display: true,
-          text: 'Minutes Spent'
-        }
-      },
-      x: {
-        title: {
-          display: true,
-          text: 'Hour of Day'
-        }
-      }
-    },
-    plugins: {
-      legend: {
-        position: 'top',
-      },
-      title: {
-        display: true,
-        text: 'High Impact Activity Distribution'
-      }
-    }
-  };
-
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800">Your Productivity Insights</h1>
-        <p className="text-gray-600 mt-2">Understanding when you're most effective</p>
-      </div>
-
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <div className="h-[400px]">
-          <Bar data={chartData} options={options} />
-        </div>
+        <p className="text-gray-600 mt-2">Understanding your high-impact work patterns</p>
       </div>
 
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">Key Insights</h2>
-        <div className="space-y-4">
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <p className="text-gray-800">
-              <span className="font-semibold">Peak Productivity:</span> Your most productive time for high-impact work is at {insights.peakHour}
-            </p>
-          </div>
-          
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <p className="text-gray-800">
-              <span className="font-semibold">Time of Day Pattern:</span> You tend to be most effective during the {insights.mostProductiveTime}
+        <h2 className="text-xl font-semibold mb-6">Key Insights</h2>
+        
+        <div className="space-y-6">
+          <div className="p-5 bg-gray-50 rounded-lg border border-gray-100">
+            <h3 className="font-semibold text-lg text-gray-800 mb-2">Peak Productivity Time</h3>
+            <p className="text-gray-700">
+              You're most productive at <span className="font-semibold text-blue-600">{insights.peakHour}</span>, 
+              typically during the <span className="font-semibold text-blue-600">{insights.mostProductiveTime}</span>
             </p>
           </div>
 
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <p className="text-gray-800">
-              <span className="font-semibold">High Impact Focus:</span> You've spent {insights.totalHighImpactHours} hours on high-impact activities
+          <div className="p-5 bg-gray-50 rounded-lg border border-gray-100">
+            <h3 className="font-semibold text-lg text-gray-800 mb-2">High-Impact Work</h3>
+            <p className="text-gray-700">
+              You've dedicated <span className="font-semibold text-blue-600">{insights.totalHighImpactHours} hours</span> to 
+              high-impact activities across <span className="font-semibold text-blue-600">{insights.totalTasks} tasks</span>
             </p>
           </div>
 
-          <div className="p-4 bg-blue-50 rounded-lg mt-6">
-            <p className="text-blue-800">
-              <span className="font-semibold">💡 Recommendation:</span> Consider scheduling your most important tasks around {insights.peakHour} to maximize your natural productivity rhythm.
-            </p>
+          <div className="p-5 bg-blue-50 rounded-lg border border-blue-100">
+            <h3 className="font-semibold text-lg text-blue-800 mb-2">💡 Recommendations</h3>
+            <ul className="space-y-3 text-blue-700">
+              <li>• Schedule your most important tasks around {insights.peakHour} to maximize productivity</li>
+              <li>• Use your {insights.mostProductiveTime} hours for complex, high-impact work</li>
+              <li>• Consider blocking out your peak hours for focused work sessions</li>
+            </ul>
+          </div>
+
+          <div className="p-5 bg-purple-50 rounded-lg border border-purple-100">
+            <h3 className="font-semibold text-lg text-purple-800 mb-2">🎯 Action Steps</h3>
+            <ul className="space-y-3 text-purple-700">
+              <li>• Block your calendar for high-impact work during {insights.peakHour}</li>
+              <li>• Minimize distractions during your peak {insights.mostProductiveTime} hours</li>
+              <li>• Review and adjust your schedule to align with your natural productivity rhythm</li>
+            </ul>
           </div>
         </div>
       </div>
