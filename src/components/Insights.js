@@ -5,67 +5,76 @@ import { Bar } from 'react-chartjs-2';
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 function Insights() {
-  const [timeData, setTimeData] = useState({
-    morning: { high: 0, medium: 0, low: 0 },
-    afternoon: { high: 0, medium: 0, low: 0 },
-    evening: { high: 0, medium: 0, low: 0 }
-  });
+  const [hourlyData, setHourlyData] = useState({});
+  const [mostProductiveHour, setMostProductiveHour] = useState(null);
+  const [totalHighImpactTime, setTotalHighImpactTime] = useState(0);
 
   useEffect(() => {
-    analyzeTimePatterns();
+    analyzeHourlyPatterns();
   }, []);
 
-  const analyzeTimePatterns = () => {
+  const analyzeHourlyPatterns = () => {
     const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-    const patterns = {
-      morning: { high: 0, medium: 0, low: 0 },
-      afternoon: { high: 0, medium: 0, low: 0 },
-      evening: { high: 0, medium: 0, low: 0 }
-    };
+    const hourlyStats = {};
+    let totalHigh = 0;
+    
+    // Initialize hourly slots (0-23)
+    for (let i = 0; i < 24; i++) {
+      hourlyStats[i] = {
+        high: 0,
+        medium: 0,
+        low: 0
+      };
+    }
 
     allTasks.forEach(task => {
-      if (task.completed && task.startTime) {
+      if (task.completed && task.startTime && task.duration) {
         const hour = new Date(task.startTime).getHours();
-        const timeOfDay = hour >= 5 && hour < 12 ? 'morning' 
-                       : hour >= 12 && hour < 17 ? 'afternoon'
-                       : 'evening';
-        
         const impact = task.leverage?.toLowerCase() || 'low';
-        patterns[timeOfDay][impact] += task.duration || 0;
+        hourlyStats[hour][impact] += task.duration;
+
+        if (impact === 'high') {
+          totalHigh += task.duration;
+        }
       }
     });
 
-    setTimeData(patterns);
+    // Find most productive hour (highest high-impact time)
+    let maxHighImpactTime = 0;
+    let mostProductiveHr = 0;
+    
+    Object.entries(hourlyStats).forEach(([hour, stats]) => {
+      if (stats.high > maxHighImpactTime) {
+        maxHighImpactTime = stats.high;
+        mostProductiveHr = parseInt(hour);
+      }
+    });
+
+    setHourlyData(hourlyStats);
+    setMostProductiveHour(mostProductiveHr);
+    setTotalHighImpactTime(totalHigh);
+  };
+
+  const formatHour = (hour) => {
+    return `${hour % 12 || 12}${hour < 12 ? 'AM' : 'PM'}`;
   };
 
   const chartData = {
-    labels: ['Morning (5AM-12PM)', 'Afternoon (12PM-5PM)', 'Evening (5PM-12AM)'],
+    labels: Array.from({length: 24}, (_, i) => formatHour(i)),
     datasets: [
       {
         label: 'High Impact',
-        data: [
-          timeData.morning.high,
-          timeData.afternoon.high,
-          timeData.evening.high
-        ],
+        data: Object.values(hourlyData).map(h => h.high),
         backgroundColor: '#d45d5d',  // muted red
       },
       {
         label: 'Medium Impact',
-        data: [
-          timeData.morning.medium,
-          timeData.afternoon.medium,
-          timeData.evening.medium
-        ],
+        data: Object.values(hourlyData).map(h => h.medium),
         backgroundColor: '#e6c86e',  // muted yellow
       },
       {
         label: 'Low Impact',
-        data: [
-          timeData.morning.low,
-          timeData.afternoon.low,
-          timeData.evening.low
-        ],
+        data: Object.values(hourlyData).map(h => h.low),
         backgroundColor: '#7fb069',  // muted green
       }
     ]
@@ -76,6 +85,10 @@ function Insights() {
     scales: {
       x: {
         stacked: true,
+        title: {
+          display: true,
+          text: 'Hour of Day'
+        }
       },
       y: {
         stacked: true,
@@ -98,28 +111,21 @@ function Insights() {
       },
       title: {
         display: true,
-        text: 'Time Distribution Throughout the Day'
+        text: 'Task Distribution by Hour'
       }
     }
   };
 
-  const getMostProductiveTime = () => {
-    const totals = {
-      morning: Object.values(timeData.morning).reduce((a, b) => a + b, 0),
-      afternoon: Object.values(timeData.afternoon).reduce((a, b) => a + b, 0),
-      evening: Object.values(timeData.evening).reduce((a, b) => a + b, 0)
-    };
-
-    const max = Math.max(...Object.values(totals));
-    const timeOfDay = Object.keys(totals).find(key => totals[key] === max);
-    
-    return timeOfDay.charAt(0).toUpperCase() + timeOfDay.slice(1);
+  const formatTime = (minutes) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h ${mins}m`;
   };
 
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Time Pattern Insights</h1>
+        <h1 className="text-3xl font-bold text-gray-800">Productivity Insights</h1>
       </div>
 
       <div className="bg-white rounded-lg shadow p-6 mb-6">
@@ -130,9 +136,18 @@ function Insights() {
 
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-xl font-semibold mb-4">Key Insights</h2>
-        <p className="text-gray-700">
-          Your most productive time of day appears to be during the {getMostProductiveTime()}.
-        </p>
+        <div className="space-y-4">
+          <p className="text-gray-700">
+            <span className="font-semibold">Most Productive Hour:</span> {mostProductiveHour !== null && 
+              `${formatHour(mostProductiveHour)} - ${formatHour((mostProductiveHour + 1) % 24)}`}
+          </p>
+          <p className="text-gray-700">
+            <span className="font-semibold">Total High-Impact Time:</span> {formatTime(totalHighImpactTime)}
+          </p>
+          <p className="text-gray-700">
+            <span className="font-semibold">Productivity Tip:</span> Consider scheduling your most important tasks during your peak productivity hour to maximize impact.
+          </p>
+        </div>
       </div>
     </div>
   );
