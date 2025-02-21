@@ -1,147 +1,138 @@
 import React, { useState, useEffect } from 'react';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { Pie } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+import { Bar } from 'react-chartjs-2';
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 function Insights() {
-  const [highTotal, setHighTotal] = useState(0);
-  const [mediumTotal, setMediumTotal] = useState(0);
-  const [lowTotal, setLowTotal] = useState(0);
-  const [highTimeTotal, setHighTimeTotal] = useState(0);
-  const [mediumTimeTotal, setMediumTimeTotal] = useState(0);
-  const [lowTimeTotal, setLowTimeTotal] = useState(0);
+  const [timeData, setTimeData] = useState({
+    morning: { high: 0, medium: 0, low: 0 },
+    afternoon: { high: 0, medium: 0, low: 0 },
+    evening: { high: 0, medium: 0, low: 0 }
+  });
 
   useEffect(() => {
-    calculateTotals();
+    analyzeTimePatterns();
   }, []);
 
-  const calculateTotals = () => {
+  const analyzeTimePatterns = () => {
     const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-    let high = 0;
-    let medium = 0;
-    let low = 0;
-    let highTime = 0;
-    let mediumTime = 0;
-    let lowTime = 0;
+    const patterns = {
+      morning: { high: 0, medium: 0, low: 0 },
+      afternoon: { high: 0, medium: 0, low: 0 },
+      evening: { high: 0, medium: 0, low: 0 }
+    };
 
     allTasks.forEach(task => {
-      if (task.completed) {
-        switch (task.leverage) {
-          case 'High':
-            high++;
-            highTime += task.duration || 0;
-            break;
-          case 'Medium':
-            medium++;
-            mediumTime += task.duration || 0;
-            break;
-          case 'Low':
-            low++;
-            lowTime += task.duration || 0;
-            break;
-          default:
-            break;
-        }
+      if (task.completed && task.startTime) {
+        const hour = new Date(task.startTime).getHours();
+        const timeOfDay = hour >= 5 && hour < 12 ? 'morning' 
+                       : hour >= 12 && hour < 17 ? 'afternoon'
+                       : 'evening';
+        
+        const impact = task.leverage?.toLowerCase() || 'low';
+        patterns[timeOfDay][impact] += task.duration || 0;
       }
     });
 
-    setHighTotal(high);
-    setMediumTotal(medium);
-    setLowTotal(low);
-    setHighTimeTotal(highTime);
-    setMediumTimeTotal(mediumTime);
-    setLowTimeTotal(lowTime);
+    setTimeData(patterns);
   };
 
   const chartData = {
-    labels: ['High Impact', 'Medium Impact', 'Low Impact'],
-    datasets: [{
-      data: [highTotal, mediumTotal, lowTotal],
-      backgroundColor: ['#d45d5d', '#e6c86e', '#7fb069'],  // muted red, yellow, green
-      borderWidth: 0
-    }]
+    labels: ['Morning (5AM-12PM)', 'Afternoon (12PM-5PM)', 'Evening (5PM-12AM)'],
+    datasets: [
+      {
+        label: 'High Impact',
+        data: [
+          timeData.morning.high,
+          timeData.afternoon.high,
+          timeData.evening.high
+        ],
+        backgroundColor: '#d45d5d',  // muted red
+      },
+      {
+        label: 'Medium Impact',
+        data: [
+          timeData.morning.medium,
+          timeData.afternoon.medium,
+          timeData.evening.medium
+        ],
+        backgroundColor: '#e6c86e',  // muted yellow
+      },
+      {
+        label: 'Low Impact',
+        data: [
+          timeData.morning.low,
+          timeData.afternoon.low,
+          timeData.evening.low
+        ],
+        backgroundColor: '#7fb069',  // muted green
+      }
+    ]
   };
 
-  const timeChartData = {
-    labels: ['High Impact', 'Medium Impact', 'Low Impact'],
-    datasets: [{
-      data: [highTimeTotal, mediumTimeTotal, lowTimeTotal],
-      backgroundColor: ['#d45d5d', '#e6c86e', '#7fb069'],  // muted red, yellow, green
-      borderWidth: 0
-    }]
+  const options = {
+    responsive: true,
+    scales: {
+      x: {
+        stacked: true,
+      },
+      y: {
+        stacked: true,
+        title: {
+          display: true,
+          text: 'Time Spent (minutes)'
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          usePointStyle: true,
+          padding: 20,
+          font: {
+            size: 12
+          }
+        }
+      },
+      title: {
+        display: true,
+        text: 'Time Distribution Throughout the Day'
+      }
+    }
   };
 
-  const formatTime = (minutes) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours}h ${mins}m`;
+  const getMostProductiveTime = () => {
+    const totals = {
+      morning: Object.values(timeData.morning).reduce((a, b) => a + b, 0),
+      afternoon: Object.values(timeData.afternoon).reduce((a, b) => a + b, 0),
+      evening: Object.values(timeData.evening).reduce((a, b) => a + b, 0)
+    };
+
+    const max = Math.max(...Object.values(totals));
+    const timeOfDay = Object.keys(totals).find(key => totals[key] === max);
+    
+    return timeOfDay.charAt(0).toUpperCase() + timeOfDay.slice(1);
   };
 
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Task Insights</h1>
+        <h1 className="text-3xl font-bold text-gray-800">Time Pattern Insights</h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Tasks by Impact Level */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Completed Tasks by Impact Level</h2>
-          <div className="h-64">
-            <Pie 
-              data={chartData}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                  legend: {
-                    position: 'bottom',
-                    labels: {
-                      usePointStyle: true,
-                      padding: 20,
-                      font: {
-                        size: 12
-                      }
-                    }
-                  }
-                }
-              }}
-            />
-          </div>
-          <div className="mt-4 text-center text-sm text-gray-600">
-            Total Tasks: {highTotal + mediumTotal + lowTotal}
-          </div>
+      <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="h-[400px]">
+          <Bar data={chartData} options={options} />
         </div>
+      </div>
 
-        {/* Time Spent by Impact Level */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Time Spent by Impact Level</h2>
-          <div className="h-64">
-            <Pie 
-              data={timeChartData}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                  legend: {
-                    position: 'bottom',
-                    labels: {
-                      usePointStyle: true,
-                      padding: 20,
-                      font: {
-                        size: 12
-                      }
-                    }
-                  }
-                }
-              }}
-            />
-          </div>
-          <div className="mt-4 text-center text-sm text-gray-600">
-            Total Time: {formatTime(highTimeTotal + mediumTimeTotal + lowTimeTotal)}
-          </div>
-        </div>
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-xl font-semibold mb-4">Key Insights</h2>
+        <p className="text-gray-700">
+          Your most productive time of day appears to be during the {getMostProductiveTime()}.
+        </p>
       </div>
     </div>
   );
