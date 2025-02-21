@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
-import { db } from '../firebase';
+import { db, auth } from '../firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { useAuth } from '../contexts/AuthContext';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -11,18 +10,17 @@ function Insights() {
   const [hourlyData, setHourlyData] = useState({});
   const [mostProductiveHour, setMostProductiveHour] = useState(null);
   const [totalHighImpactTime, setTotalHighImpactTime] = useState(0);
-  const { currentUser } = useAuth();
 
   useEffect(() => {
-    if (currentUser) {
+    if (auth.currentUser) {
       analyzeHourlyPatterns();
     }
-  }, [currentUser]);
+  }, []);
 
   const analyzeHourlyPatterns = async () => {
     try {
       const tasksRef = collection(db, 'tasks');
-      const q = query(tasksRef, where('userId', '==', currentUser.uid));
+      const q = query(tasksRef, where('userId', '==', auth.currentUser.uid));
       const querySnapshot = await getDocs(q);
       
       const hourlyStats = {};
