@@ -10,14 +10,14 @@ function Summary() {
       labels: ['High', 'Medium', 'Low', 'Unranked'],
       datasets: [{
         data: [0, 0, 0, 0],
-        backgroundColor: ['#10B981', '#F59E0B', '#EF4444', '#6B7280']  // Changed colors
+        backgroundColor: ['#d45d5d', '#e6c86e', '#7fb069', '#6B7280']  // muted red, yellow, green, gray
       }]
     },
     percentages: {
       labels: ['High', 'Medium', 'Low', 'Unranked'],
       datasets: [{
         data: [0, 0, 0, 0],
-        backgroundColor: ['#10B981', '#F59E0B', '#EF4444', '#6B7280']  // Changed colors
+        backgroundColor: ['#d45d5d', '#e6c86e', '#7fb069', '#6B7280']  // muted red, yellow, green, gray
       }]
     }
   });
@@ -54,7 +54,7 @@ function Summary() {
         labels: ['High', 'Medium', 'Low', 'Unranked'],
         datasets: [{
           data: Object.values(leverageCounts),
-          backgroundColor: ['#10B981', '#F59E0B', '#EF4444', '#6B7280'],  // Green, Yellow, Red, Gray
+          backgroundColor: ['#d45d5d', '#e6c86e', '#7fb069', '#6B7280'],  // muted red, yellow, green, gray
           borderWidth: 0
         }]
       },
@@ -62,7 +62,7 @@ function Summary() {
         labels: ['High', 'Medium', 'Low', 'Unranked'],
         datasets: [{
           data: percentages,
-          backgroundColor: ['#10B981', '#F59E0B', '#EF4444', '#6B7280'],  // Green, Yellow, Red, Gray
+          backgroundColor: ['#d45d5d', '#e6c86e', '#7fb069', '#6B7280'],  // muted red, yellow, green, gray
           borderWidth: 0
         }]
       }
