@@ -1,124 +1,100 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate } from 'react-router-dom';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from './firebase';
-import { signOut } from 'firebase/auth';
-import Timer from './components/Timer';
-import AllTasks from './components/AllTasks';
-import Summary from './components/Summary';
-import Insights from './components/Insights';
-import Login from './components/auth/Login';
-import SignUp from './components/auth/SignUp';
+import Login from './pages/Login';
+import TaskList from './pages/TaskList';
+import Summary from './pages/Summary';
+import Insights from './pages/Insights';
 
-function App() {
-  const [isTimerActive, setIsTimerActive] = useState(false);
+function AppContent() {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const timerState = localStorage.getItem('isTimerActive');
-    setIsTimerActive(timerState === 'true');
-
-    // Listen for auth state changes
-    const unsubscribe = auth.onAuthStateChanged(user => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
+      setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
-  const handleNavigation = (e, path) => {
-    if (isTimerActive && path !== '/') {
-      e.preventDefault();
-    }
-  };
-
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      // User is automatically redirected to home page
+      navigate('/login');  // Add redirect to login page
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('Error logging out:', error);
     }
   };
 
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   return (
-    <Router>
-      <div className="min-h-screen bg-gray-100">
-        <nav className="bg-white shadow-sm">
-          <div className="max-w-7xl mx-auto px-4">
+    <div>
+      {user && (
+        <header className="bg-white shadow">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16">
-              <div className="flex space-x-8">
-                <Link 
-                  to="/" 
-                  className="flex items-center px-3 pt-1 text-gray-900 font-medium"
-                >
-                  Timer
-                </Link>
-                <Link 
-                  to="/all-tasks" 
-                  onClick={(e) => handleNavigation(e, '/all-tasks')}
-                  className={`flex items-center px-3 pt-1 font-medium ${
-                    isTimerActive ? 'text-gray-400 cursor-not-allowed' : 'text-gray-900'
-                  }`}
-                  title={isTimerActive ? "Focus on your current task" : ""}
-                >
-                  All Tasks
-                </Link>
-                <Link 
-                  to="/summary" 
-                  onClick={(e) => handleNavigation(e, '/summary')}
-                  className={`flex items-center px-3 pt-1 font-medium ${
-                    isTimerActive ? 'text-gray-400 cursor-not-allowed' : 'text-gray-900'
-                  }`}
-                  title={isTimerActive ? "Focus on your current task" : ""}
-                >
-                  Summary
-                </Link>
-                <Link 
-                  to="/insights" 
-                  onClick={(e) => handleNavigation(e, '/insights')}
-                  className={`flex items-center px-3 pt-1 font-medium ${
-                    isTimerActive ? 'text-gray-400 cursor-not-allowed' : 'text-gray-900'
-                  }`}
-                  title={isTimerActive ? "Focus on your current task" : ""}
-                >
-                  Insights
-                </Link>
+              <div className="flex">
+                <div className="flex items-center px-2 lg:px-0">
+                  <span className="font-bold text-xl text-gray-800">TimeWell</span>
+                </div>
+                <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                  <a href="/" className="text-gray-900 inline-flex items-center px-1 pt-1 text-sm font-medium">
+                    Tasks
+                  </a>
+                  <a href="/summary" className="text-gray-900 inline-flex items-center px-1 pt-1 text-sm font-medium">
+                    Summary
+                  </a>
+                  <a href="/insights" className="text-gray-900 inline-flex items-center px-1 pt-1 text-sm font-medium">
+                    Insights
+                  </a>
+                </div>
               </div>
-              <div className="flex items-center space-x-4">
-                {user ? (
-                  <>
-                    <span className="text-gray-700">{user.email}</span>
-                    <button
-                      onClick={handleLogout}
-                      className="text-gray-700 hover:text-gray-900 font-medium"
-                    >
-                      Logout
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <Link to="/login" className="text-gray-700 hover:text-gray-900 font-medium">
-                      Login
-                    </Link>
-                    <Link to="/signup" className="text-gray-700 hover:text-gray-900 font-medium">
-                      Sign Up
-                    </Link>
-                  </>
-                )}
+              <div className="flex items-center">
+                <button
+                  onClick={handleLogout}
+                  className="text-gray-900 inline-flex items-center px-1 pt-1 text-sm font-medium"
+                >
+                  Logout
+                </button>
               </div>
             </div>
           </div>
-        </nav>
+        </header>
+      )}
 
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/" element={<Timer setIsTimerActive={setIsTimerActive} />} />
-          <Route path="/all-tasks" element={<AllTasks />} />
-          <Route path="/summary" element={<Summary />} />
-          <Route path="/insights" element={<Insights />} />
-        </Routes>
-      </div>
+      <Routes>
+        <Route
+          path="/login"
+          element={user ? <Navigate to="/" /> : <Login />}
+        />
+        <Route
+          path="/"
+          element={user ? <TaskList /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/summary"
+          element={user ? <Summary /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/insights"
+          element={user ? <Insights /> : <Navigate to="/login" />}
+        />
+      </Routes>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <AppContent />
     </Router>
   );
 }
