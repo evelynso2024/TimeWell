@@ -4,9 +4,9 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from './firebase';
 
 import Login from './components/auth/Login'
-import TaskList from './pages/TaskList';
-import Summary from './pages/Summary';
-import Insights from './pages/Insights';
+import TaskList from './components/AllTasks';
+import Summary from './components/Summary';
+import Insights from './components/Insights';
 
 function AppContent() {
   const [user, setUser] = useState(null);
