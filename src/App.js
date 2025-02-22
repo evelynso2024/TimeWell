@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate } from 'react-router-dom';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from './firebase';
-import Login from './pages/Login';
+
+import Login from './components/auth/Login'
 import TaskList from './pages/TaskList';
 import Summary from './pages/Summary';
 import Insights from './pages/Insights';
