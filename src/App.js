@@ -3,10 +3,10 @@ import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate } from 'r
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from './firebase';
 import Login from './components/auth/Login';
-import AllTasks from './components/AllTasks';  // Changed from AllTask to AllTasks
+import AllTasks from './components/AllTasks';
 import Summary from './components/Summary';
 import Insights from './components/Insights';
-import Timer from './components/Timer';
+import Timer from './components/Timer';  // Fixed Timer import path
 
 function AppContent() {
   const [user, setUser] = useState(null);
@@ -46,11 +46,11 @@ function AppContent() {
                   <span className="font-bold text-xl text-gray-800">TimeWell</span>
                 </div>
                 <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                  <a href="/" className="text-gray-900 inline-flex items-center px-1 pt-1 text-sm font-medium">
-                    Tasks
-                  </a>
                   <a href="/timer" className="text-gray-900 inline-flex items-center px-1 pt-1 text-sm font-medium">
                     Timer
+                  </a>
+                  <a href="/tasks" className="text-gray-900 inline-flex items-center px-1 pt-1 text-sm font-medium">
+                    Tasks
                   </a>
                   <a href="/summary" className="text-gray-900 inline-flex items-center px-1 pt-1 text-sm font-medium">
                     Summary
@@ -76,15 +76,15 @@ function AppContent() {
       <Routes>
         <Route
           path="/login"
-          element={user ? <Navigate to="/" /> : <Login />}
-        />
-        <Route
-          path="/"
-          element={user ? <AllTasks /> : <Navigate to="/login" />}  // Changed from AllTask to AllTasks
+          element={user ? <Navigate to="/timer" /> : <Login />}
         />
         <Route
           path="/timer"
           element={user ? <Timer /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/tasks"
+          element={user ? <AllTasks /> : <Navigate to="/login" />}
         />
         <Route
           path="/summary"
@@ -93,6 +93,10 @@ function AppContent() {
         <Route
           path="/insights"
           element={user ? <Insights /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/"
+          element={<Navigate to="/timer" />}
         />
       </Routes>
     </div>
