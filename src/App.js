@@ -4,7 +4,8 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from './firebase';
 
 import Login from './components/auth/Login'
-import TaskList from './components/AllTasks';
+import Timer from './components/Timer';
+import AllTasks from './components/AllTasks';
 import Summary from './components/Summary';
 import Insights from './components/Insights';
 
