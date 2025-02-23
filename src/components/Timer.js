@@ -1,16 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { getFirestore, collection, addDoc, query, where, getDocs, orderBy, limit, doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { auth } from '../firebase';
 
 function Timer({ setIsTimerActive }) {
-  // Keep all existing state variables
   const [isTimerActive, setIsTimerLocalActive] = useState(false);
   const [task, setTask] = useState('');
   const [startTime, setStartTime] = useState(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [recentTasks, setRecentTasks] = useState([]);
 
-  // Keep playClickSound function exactly the same
   const playClickSound = () => {
     const context = new (window.AudioContext || window.webkitAudioContext)();
     const oscillator = context.createOscillator();
@@ -28,7 +24,6 @@ function Timer({ setIsTimerActive }) {
     oscillator.stop(context.currentTime + 0.06);
   };
 
-  // Keep all useEffect hooks the same
   useEffect(() => {
     const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
     const recentFiveTasks = allTasks
@@ -54,7 +49,6 @@ function Timer({ setIsTimerActive }) {
     return () => clearInterval(intervalId);
   }, [isTimerActive, startTime]);
 
-  // Keep startTimer and handleKeyPress the same
   const startTimer = () => {
     if (task.trim()) {
       playClickSound();
@@ -72,13 +66,7 @@ function Timer({ setIsTimerActive }) {
     }
   };
 
-  // Update endTimer to save to both localStorage and Firebase
-  const endTimer = async () => {
-    if (!auth.currentUser) {
-      alert('Please log in to save tasks');
-      return;
-    }
-
+  const endTimer = () => {
     playClickSound();
     setIsTimerLocalActive(false);
     setIsTimerActive(false);
@@ -91,30 +79,18 @@ function Timer({ setIsTimerActive }) {
       duration: elapsedTime,
       startTime: startTime ? new Date(startTime).toISOString() : null,
       endTime: endTime,
-      leverage: '',
-      userId: auth.currentUser.uid
+      leverage: ''
     };
 
-    try {
-      // Save to Firebase
-      const db = getFirestore();
-      await addDoc(collection(db, 'tasks'), newTask);
-
-      // Save to localStorage (keep existing functionality)
-      const existingTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-      localStorage.setItem('allTasks', JSON.stringify([...existingTasks, newTask]));
-      
-      setTask('');
-      setElapsedTime(0);
-      setStartTime(null);
-      setRecentTasks([newTask, ...recentTasks.slice(0, 4)]);
-    } catch (error) {
-      console.error("Error saving task:", error);
-      alert('Error saving task. Please try again.');
-    }
+    const existingTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
+    localStorage.setItem('allTasks', JSON.stringify([...existingTasks, newTask]));
+    
+    setTask('');
+    setElapsedTime(0);
+    setStartTime(null);
+    setRecentTasks([newTask, ...recentTasks.slice(0, 4)]);
   };
 
-  // Keep formatting functions the same
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -131,45 +107,103 @@ function Timer({ setIsTimerActive }) {
     });
   };
 
-  // Update task management functions to work with both localStorage and Firebase
-  const updateTaskLeverage = async (taskId, leverage) => {
-    try {
-      const db = getFirestore();
-      const taskRef = doc(db, 'tasks', taskId);
-      await updateDoc(taskRef, { leverage });
-
-      // Update localStorage
-      const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-      const updatedTasks = allTasks.map(task => 
-        task.id === taskId ? { ...task, leverage } : task
-      );
-      localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
-      setRecentTasks(updatedTasks.slice(-5).reverse());
-    } catch (error) {
-      console.error("Error updating task:", error);
-    }
+  const updateTaskLeverage = (taskId, leverage) => {
+    const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
+    const updatedTasks = allTasks.map(task => 
+      task.id === taskId ? { ...task, leverage } : task
+    );
+    localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
+    setRecentTasks(updatedTasks.slice(-5).reverse());
   };
 
-  const deleteTask = async (taskId) => {
-    try {
-      const db = getFirestore();
-      const taskRef = doc(db, 'tasks', taskId);
-      await deleteDoc(taskRef);
-
-      // Update localStorage
-      const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-      const updatedTasks = allTasks.filter(task => task.id !== taskId);
-      localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
-      setRecentTasks(updatedTasks.slice(-5).reverse());
-    } catch (error) {
-      console.error("Error deleting task:", error);
-    }
+  const deleteTask = (taskId) => {
+    const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
+    const updatedTasks = allTasks.filter(task => task.id !== taskId);
+    localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
+    setRecentTasks(updatedTasks.slice(-5).reverse());
   };
 
-  // Keep the entire return/JSX section exactly the same
   return (
     <div className="max-w-2xl mx-auto p-6">
-      {/* ... rest of your JSX remains exactly the same ... */}
+      {!isTimerActive ? (
+        <>
+          <div className="bg-white rounded-lg shadow p-6 mb-6">
+            <input
+              type="text"
+              value={task}
+              onChange={(e) => setTask(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="What are you working on?"
+              className="w-full p-4 text-xl border rounded mb-4"
+              autoFocus
+            />
+            <button
+              onClick={startTimer}
+              disabled={!task.trim()}
+              className={`w-full p-4 rounded text-white text-xl
+                ${task.trim() ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-300'}`}
+            >
+              Start Timer
+            </button>
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-semibold mb-4">Recent Tasks</h2>
+            <div className="space-y-4">
+              <ul className="space-y-3">
+                {recentTasks.map((task) => (
+                  <li 
+                    key={task.id}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded"
+                  >
+                    <div>
+                      <div className="font-medium">{task.name}</div>
+                      <div className="text-sm text-gray-500">
+                        {formatTime(task.duration)} • {formatDateTime(task.startTime)} - {formatDateTime(task.endTime)}
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <select
+                        value={task.leverage || ''}
+                        onChange={(e) => updateTaskLeverage(task.id, e.target.value)}
+                        className="p-2 border rounded text-sm bg-white"
+                      >
+                        <option value="">Rank</option>
+                        <option value="High">High impact</option>
+                        <option value="Medium">Medium impact</option>
+                        <option value="Low">Low impact</option>
+                      </select>
+                      <button
+                        onClick={() => deleteTask(task.id)}
+                        className="text-red-500 hover:text-red-700 font-bold"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="bg-white rounded-lg shadow p-6 text-center">
+          <div className="text-4xl font-bold mb-4 text-gray-800">
+            {task}
+          </div>
+          <div className="text-3xl font-mono mb-6 text-gray-600">
+            {formatTime(elapsedTime)}
+          </div>
+          <div className="flex justify-center">
+            <button
+              onClick={endTimer}
+              className="w-1/3 bg-red-500 text-white px-8 py-3 rounded hover:bg-red-600"
+            >
+              End Timer
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
