@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getFirestore, collection, addDoc, query, where, getDocs, doc, updateDoc, deleteDoc, orderBy, limit } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, query, where, getDocs, doc, updateDoc, deleteDoc, orderBy, limit, Timestamp } from 'firebase/firestore';
 import { auth } from '../firebase';
 
 function Timer({ setIsTimerActive }) {
@@ -33,6 +33,8 @@ function Timer({ setIsTimerActive }) {
   }, [auth.currentUser]);
 
   const loadRecentTasks = async () => {
+    if (!auth.currentUser) return;
+    
     try {
       const db = getFirestore();
       const tasksRef = collection(db, 'tasks');
@@ -98,19 +100,17 @@ function Timer({ setIsTimerActive }) {
     setIsTimerLocalActive(false);
     setIsTimerActive(false);
     localStorage.setItem('isTimerActive', 'false');
-    
-    const endTime = new Date();
-    const startTimeDate = startTime ? new Date(startTime) : new Date();
 
     try {
       const db = getFirestore();
       const newTask = {
         name: task,
         duration: elapsedTime,
-        startTime: startTimeDate,
-        endTime: endTime,
+        startTime: Timestamp.fromDate(new Date(startTime)),
+        endTime: Timestamp.fromDate(new Date()),
         leverage: '',
-        userId: auth.currentUser.uid
+        userId: auth.currentUser.uid,
+        timestamp: Timestamp.now()
       };
 
       await addDoc(collection(db, 'tasks'), newTask);
@@ -121,7 +121,7 @@ function Timer({ setIsTimerActive }) {
       setStartTime(null);
     } catch (error) {
       console.error("Error saving task:", error);
-      alert('Error saving task');
+      alert('Error saving task. Please try again.');
     }
   };
 
@@ -133,7 +133,7 @@ function Timer({ setIsTimerActive }) {
   };
 
   const formatDateTime = (timestamp) => {
-    if (!timestamp) return '';
+    if (!timestamp || !timestamp.seconds) return '';
     return new Date(timestamp.seconds * 1000).toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
@@ -142,6 +142,8 @@ function Timer({ setIsTimerActive }) {
   };
 
   const updateTaskLeverage = async (taskId, leverage) => {
+    if (!auth.currentUser) return;
+    
     try {
       const db = getFirestore();
       const taskRef = doc(db, 'tasks', taskId);
@@ -153,6 +155,8 @@ function Timer({ setIsTimerActive }) {
   };
 
   const deleteTask = async (taskId) => {
+    if (!auth.currentUser) return;
+    
     try {
       const db = getFirestore();
       const taskRef = doc(db, 'tasks', taskId);
