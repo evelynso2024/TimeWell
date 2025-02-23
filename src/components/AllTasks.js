@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { getFirestore, collection, query, where, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { auth } from '../firebase';
 
 function AllTasks() {
   const [tasks, setTasks] = useState([]);
@@ -9,65 +11,80 @@ function AllTasks() {
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
   useEffect(() => {
-    loadTasks();
+    if (auth.currentUser) {
+      loadTasks();
+    }
   }, [timeFilter, filterType, sortBy, dateRange]);
 
-  const loadTasks = () => {
-    let allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-    const now = new Date();
-    
-    // Date range or time filter
-    if (timeFilter === 'custom' && dateRange.start && dateRange.end) {
-      const startDate = new Date(dateRange.start);
-      const endDate = new Date(dateRange.end);
-      endDate.setHours(23, 59, 59, 999); // Include the entire end date
+  const loadTasks = async () => {
+    try {
+      const db = getFirestore();
+      const tasksRef = collection(db, 'tasks');
+      const q = query(
+        tasksRef,
+        where('userId', '==', auth.currentUser.uid)
+      );
       
-      allTasks = allTasks.filter(task => {
-        const taskDate = new Date(task.startTime || task.timestamp);
-        return taskDate >= startDate && taskDate <= endDate;
+      const querySnapshot = await getDocs(q);
+      let allTasks = [];
+      querySnapshot.forEach((doc) => {
+        allTasks.push({ id: doc.id, ...doc.data() });
       });
-    } else {
-      allTasks = allTasks.filter(task => {
-        const taskDate = new Date(task.startTime || task.timestamp);
-        const hoursDiff = (now - taskDate) / (1000 * 60 * 60);
+
+      const now = new Date();
+      
+      if (timeFilter === 'custom' && dateRange.start && dateRange.end) {
+        const startDate = new Date(dateRange.start);
+        const endDate = new Date(dateRange.end);
+        endDate.setHours(23, 59, 59, 999);
         
-        switch(timeFilter) {
-          case '7d': return hoursDiff <= 168;
-          case '30d': return hoursDiff <= 720;
-          default: return hoursDiff <= 24;
+        allTasks = allTasks.filter(task => {
+          const taskDate = new Date(task.startTime);
+          return taskDate >= startDate && taskDate <= endDate;
+        });
+      } else {
+        allTasks = allTasks.filter(task => {
+          const taskDate = new Date(task.startTime);
+          const hoursDiff = (now - taskDate) / (1000 * 60 * 60);
+          
+          switch(timeFilter) {
+            case '7d': return hoursDiff <= 168;
+            case '30d': return hoursDiff <= 720;
+            default: return hoursDiff <= 24;
+          }
+        });
+      }
+
+      if (filterType !== 'all') {
+        allTasks = allTasks.filter(task => 
+          task.leverage?.toLowerCase() === filterType
+        );
+      }
+
+      allTasks.sort((a, b) => {
+        switch(sortBy) {
+          case 'oldest':
+            return new Date(a.startTime) - new Date(b.startTime);
+          case 'newest':
+            return new Date(b.startTime) - new Date(a.startTime);
+          case 'shortest':
+            return a.duration - b.duration;
+          case 'longest':
+            return b.duration - a.duration;
+          case 'nameAZ':
+            return a.name.localeCompare(b.name);
+          case 'nameZA':
+            return b.name.localeCompare(a.name);
+          default:
+            return new Date(b.startTime) - new Date(a.startTime);
         }
       });
+
+      setTasks(allTasks);
+      setSelectedTasks(new Set());
+    } catch (error) {
+      console.error("Error loading tasks:", error);
     }
-
-    // Impact filter
-    if (filterType !== 'all') {
-      allTasks = allTasks.filter(task => 
-        task.leverage?.toLowerCase() === filterType
-      );
-    }
-
-    // Sort
-    allTasks.sort((a, b) => {
-      switch(sortBy) {
-        case 'oldest':
-          return new Date(a.startTime || a.timestamp) - new Date(b.startTime || b.timestamp);
-        case 'newest':
-          return new Date(b.startTime || b.timestamp) - new Date(a.startTime || a.timestamp);
-        case 'shortest':
-          return a.duration - b.duration;
-        case 'longest':
-          return b.duration - a.duration;
-        case 'nameAZ':
-          return a.name.localeCompare(b.name);
-        case 'nameZA':
-          return b.name.localeCompare(a.name);
-        default:
-          return new Date(b.startTime || b.timestamp) - new Date(a.startTime || a.timestamp);
-      }
-    });
-
-    setTasks(allTasks);
-    setSelectedTasks(new Set());
   };
 
   const formatTime = (seconds) => {
@@ -104,29 +121,41 @@ function AllTasks() {
     setSelectedTasks(newSelected);
   };
 
-  const deleteSelectedTasks = () => {
+  const deleteSelectedTasks = async () => {
     if (window.confirm('Are you sure you want to delete the selected tasks?')) {
-      const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-      const updatedTasks = allTasks.filter(task => !selectedTasks.has(task.id));
-      localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
-      loadTasks();
+      try {
+        const db = getFirestore();
+        const promises = Array.from(selectedTasks).map(taskId => 
+          deleteDoc(doc(db, 'tasks', taskId))
+        );
+        await Promise.all(promises);
+        loadTasks();
+      } catch (error) {
+        console.error("Error deleting tasks:", error);
+      }
     }
   };
 
-  const updateTaskLeverage = (taskId, leverage) => {
-    const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-    const updatedTasks = allTasks.map(task => 
-      task.id === taskId ? { ...task, leverage } : task
-    );
-    localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
-    loadTasks();
+  const updateTaskLeverage = async (taskId, leverage) => {
+    try {
+      const db = getFirestore();
+      const taskRef = doc(db, 'tasks', taskId);
+      await updateDoc(taskRef, { leverage });
+      loadTasks();
+    } catch (error) {
+      console.error("Error updating task:", error);
+    }
   };
 
-  const deleteTask = (taskId) => {
-    const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-    const updatedTasks = allTasks.filter(task => task.id !== taskId);
-    localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
-    loadTasks();
+  const deleteTask = async (taskId) => {
+    try {
+      const db = getFirestore();
+      const taskRef = doc(db, 'tasks', taskId);
+      await deleteDoc(taskRef);
+      loadTasks();
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
   };
 
   const handleClickOutside = (event) => {
