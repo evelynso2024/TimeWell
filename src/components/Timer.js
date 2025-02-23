@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { getFirestore, collection, addDoc, query, where, getDocs, doc, updateDoc, deleteDoc, orderBy, limit, serverTimestamp } from 'firebase/firestore';
-import { auth } from '../firebase';
 
 function Timer({ setIsTimerActive }) {
   const [isTimerActive, setIsTimerLocalActive] = useState(false);
@@ -27,34 +25,12 @@ function Timer({ setIsTimerActive }) {
   };
 
   useEffect(() => {
-    if (auth.currentUser) {
-      loadRecentTasks();
-    }
-  }, [auth.currentUser]);
-
-  const loadRecentTasks = async () => {
-    if (!auth.currentUser) return;
-    
-    try {
-      const db = getFirestore();
-      const tasksRef = collection(db, 'tasks');
-      const q = query(
-        tasksRef,
-        where('userId', '==', auth.currentUser.uid),
-        orderBy('timestamp', 'desc'),
-        limit(5)
-      );
-      
-      const querySnapshot = await getDocs(q);
-      const recentFiveTasks = [];
-      querySnapshot.forEach((doc) => {
-        recentFiveTasks.push({ id: doc.id, ...doc.data() });
-      });
-      setRecentTasks(recentFiveTasks);
-    } catch (error) {
-      console.error("Error loading recent tasks:", error);
-    }
-  };
+    const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
+    const recentFiveTasks = allTasks
+      .sort((a, b) => new Date(b.startTime) - new Date(a.startTime))
+      .slice(0, 5);
+    setRecentTasks(recentFiveTasks);
+  }, []);
 
   useEffect(() => {
     const storedTimerState = localStorage.getItem('isTimerActive') === 'true';
@@ -90,39 +66,29 @@ function Timer({ setIsTimerActive }) {
     }
   };
 
-  const endTimer = async () => {
-    if (!auth.currentUser) {
-      alert('Please log in to save tasks');
-      return;
-    }
-
+  const endTimer = () => {
     playClickSound();
     setIsTimerLocalActive(false);
     setIsTimerActive(false);
     localStorage.setItem('isTimerActive', 'false');
+    
+    const endTime = new Date().toISOString();
+    const newTask = {
+      id: Date.now(),
+      name: task,
+      duration: elapsedTime,
+      startTime: startTime ? new Date(startTime).toISOString() : null,
+      endTime: endTime,
+      leverage: ''
+    };
 
-    try {
-      const db = getFirestore();
-      const newTask = {
-        name: task,
-        duration: elapsedTime,
-        startTime: new Date(startTime).toISOString(),
-        endTime: new Date().toISOString(),
-        leverage: '',
-        userId: auth.currentUser.uid,
-        timestamp: serverTimestamp()
-      };
-
-      await addDoc(collection(db, 'tasks'), newTask);
-      await loadRecentTasks();
-      
-      setTask('');
-      setElapsedTime(0);
-      setStartTime(null);
-    } catch (error) {
-      console.error("Error saving task:", error);
-      alert('Error saving task. Please try again.');
-    }
+    const existingTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
+    localStorage.setItem('allTasks', JSON.stringify([...existingTasks, newTask]));
+    
+    setTask('');
+    setElapsedTime(0);
+    setStartTime(null);
+    setRecentTasks([newTask, ...recentTasks.slice(0, 4)]);
   };
 
   const formatTime = (seconds) => {
@@ -134,41 +100,27 @@ function Timer({ setIsTimerActive }) {
 
   const formatDateTime = (isoString) => {
     if (!isoString) return '';
-    try {
-      return new Date(isoString).toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      });
-    } catch (error) {
-      return '';
-    }
+    return new Date(isoString).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
   };
 
-  const updateTaskLeverage = async (taskId, leverage) => {
-    if (!auth.currentUser) return;
-    
-    try {
-      const db = getFirestore();
-      const taskRef = doc(db, 'tasks', taskId);
-      await updateDoc(taskRef, { leverage });
-      await loadRecentTasks();
-    } catch (error) {
-      console.error("Error updating task:", error);
-    }
+  const updateTaskLeverage = (taskId, leverage) => {
+    const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
+    const updatedTasks = allTasks.map(task => 
+      task.id === taskId ? { ...task, leverage } : task
+    );
+    localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
+    setRecentTasks(updatedTasks.slice(-5).reverse());
   };
 
-  const deleteTask = async (taskId) => {
-    if (!auth.currentUser) return;
-    
-    try {
-      const db = getFirestore();
-      const taskRef = doc(db, 'tasks', taskId);
-      await deleteDoc(taskRef);
-      await loadRecentTasks();
-    } catch (error) {
-      console.error("Error deleting task:", error);
-    }
+  const deleteTask = (taskId) => {
+    const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
+    const updatedTasks = allTasks.filter(task => task.id !== taskId);
+    localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
+    setRecentTasks(updatedTasks.slice(-5).reverse());
   };
 
   return (
