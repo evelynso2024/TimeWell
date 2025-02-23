@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getFirestore, collection, addDoc, query, where, getDocs, doc, updateDoc, deleteDoc, orderBy, limit, Timestamp } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, query, where, getDocs, doc, updateDoc, deleteDoc, orderBy, limit, serverTimestamp } from 'firebase/firestore';
 import { auth } from '../firebase';
 
 function Timer({ setIsTimerActive }) {
@@ -41,7 +41,7 @@ function Timer({ setIsTimerActive }) {
       const q = query(
         tasksRef,
         where('userId', '==', auth.currentUser.uid),
-        orderBy('startTime', 'desc'),
+        orderBy('timestamp', 'desc'),
         limit(5)
       );
       
@@ -106,11 +106,11 @@ function Timer({ setIsTimerActive }) {
       const newTask = {
         name: task,
         duration: elapsedTime,
-        startTime: Timestamp.fromDate(new Date(startTime)),
-        endTime: Timestamp.fromDate(new Date()),
+        startTime: new Date(startTime).toISOString(),
+        endTime: new Date().toISOString(),
         leverage: '',
         userId: auth.currentUser.uid,
-        timestamp: Timestamp.now()
+        timestamp: serverTimestamp()
       };
 
       await addDoc(collection(db, 'tasks'), newTask);
@@ -132,13 +132,17 @@ function Timer({ setIsTimerActive }) {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const formatDateTime = (timestamp) => {
-    if (!timestamp || !timestamp.seconds) return '';
-    return new Date(timestamp.seconds * 1000).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
+  const formatDateTime = (isoString) => {
+    if (!isoString) return '';
+    try {
+      return new Date(isoString).toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+    } catch (error) {
+      return '';
+    }
   };
 
   const updateTaskLeverage = async (taskId, leverage) => {
