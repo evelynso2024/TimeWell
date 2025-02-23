@@ -50,10 +50,10 @@ function LandingPage() {
         <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white py-20">
           <div className="max-w-6xl mx-auto px-4 text-center">
             <h1 className="text-5xl font-bold mb-6">
-              Track Time, Maximize Impact
+              Turn your Time into Impact
             </h1>
             <p className="text-xl mb-8 text-blue-100">
-              Simple, effective time tracking that helps you focus on high-leverage activities
+              A smarter way to stay focused and be mindful of how you spend your time.
             </p>
             {!auth.currentUser && (
               <button
