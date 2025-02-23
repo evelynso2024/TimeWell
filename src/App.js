@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';  // Added useNavigate
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { auth } from './firebase';
 import { signOut } from 'firebase/auth';
 import Timer from './components/Timer';
@@ -8,26 +8,30 @@ import Summary from './components/Summary';
 import Insights from './components/Insights';
 import Login from './components/auth/Login';
 import SignUp from './components/auth/SignUp';
+import LandingPage from './components/LandingPage';  // Added this import
 
-function AppContent() {  // Added wrapper component for useNavigate
+function AppContent() {
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [user, setUser] = useState(null);
-  const navigate = useNavigate();  // Added navigate hook
+  const navigate = useNavigate();
 
   useEffect(() => {
     const timerState = localStorage.getItem('isTimerActive');
     setIsTimerActive(timerState === 'true');
 
-    // Listen for auth state changes
     const unsubscribe = auth.onAuthStateChanged(user => {
       setUser(user);
+      // Redirect to landing page if not logged in
+      if (!user && window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
+        navigate('/');
+      }
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const handleNavigation = (e, path) => {
-    if (isTimerActive && path !== '/') {
+    if (isTimerActive && path !== '/timer') {
       e.preventDefault();
     }
   };
@@ -35,11 +39,22 @@ function AppContent() {  // Added wrapper component for useNavigate
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      navigate('/login');  // Added redirect to login
+      navigate('/');  // Changed to redirect to landing page
     } catch (error) {
       console.error('Logout error:', error);
     }
   };
+
+  // Don't show nav bar on landing page
+  if (window.location.pathname === '/' && !user) {
+    return (
+      <Routes>
+        <Route path="/" element={<LandingPage setIsTimerActive={setIsTimerActive} />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<SignUp />} />
+      </Routes>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -48,7 +63,7 @@ function AppContent() {  // Added wrapper component for useNavigate
           <div className="flex justify-between h-16">
             <div className="flex space-x-8">
               <Link 
-                to="/" 
+                to="/timer" 
                 className="flex items-center px-3 pt-1 text-gray-900 font-medium"
               >
                 Timer
@@ -113,10 +128,11 @@ function AppContent() {  // Added wrapper component for useNavigate
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
-        <Route path="/" element={<Timer setIsTimerActive={setIsTimerActive} />} />
+        <Route path="/timer" element={<Timer setIsTimerActive={setIsTimerActive} />} />
         <Route path="/all-tasks" element={<AllTasks />} />
         <Route path="/summary" element={<Summary />} />
         <Route path="/insights" element={<Insights />} />
+        <Route path="/" element={<LandingPage setIsTimerActive={setIsTimerActive} />} />
       </Routes>
     </div>
   );
