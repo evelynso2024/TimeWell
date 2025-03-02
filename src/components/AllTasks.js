@@ -10,7 +10,8 @@ function AllTasks() {
     task_name: '',
     date: '',
     start_time: '',
-    duration: '',
+    hours: '',
+    minutes: ''
   });
   const navigate = useNavigate();
 
@@ -85,9 +86,8 @@ function AllTasks() {
   const handleAddTask = async (e) => {
     e.preventDefault();
     try {
-      // Convert duration string (HH:MM:SS) to seconds
-      const [hours, minutes, seconds] = newTask.duration.split(':').map(Number);
-      const durationInSeconds = (hours * 3600) + (minutes * 60) + seconds;
+      // Convert hours and minutes to seconds
+      const durationInSeconds = (parseInt(newTask.hours) * 3600) + (parseInt(newTask.minutes) * 60);
 
       // Combine date and time for start_time
       const startDateTime = new Date(newTask.date + 'T' + newTask.start_time);
@@ -109,7 +109,8 @@ function AllTasks() {
         task_name: '',
         date: '',
         start_time: '',
-        duration: ''
+        hours: '',
+        minutes: ''
       });
       setShowAddTask(false);
       fetchTasks(user.id);
@@ -233,19 +234,35 @@ function AllTasks() {
                   className="w-full p-2 border rounded"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Duration (HH:MM:SS)
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="00:00:00"
-                  pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}"
-                  value={newTask.duration}
-                  onChange={(e) => setNewTask({...newTask, duration: e.target.value})}
-                  className="w-full p-2 border rounded"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Hours
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    max="23"
+                    value={newTask.hours}
+                    onChange={(e) => setNewTask({...newTask, hours: e.target.value})}
+                    className="w-full p-2 border rounded"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Minutes
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    max="59"
+                    value={newTask.minutes}
+                    onChange={(e) => setNewTask({...newTask, minutes: e.target.value})}
+                    className="w-full p-2 border rounded"
+                  />
+                </div>
               </div>
               <button
                 type="submit"
