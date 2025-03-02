@@ -1,11 +1,46 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
 
-function Timer({ setIsTimerActive }) {
-  const [isTimerActive, setIsTimerLocalActive] = useState(false);
+function Timer() {
+  const [isTimerActive, setIsTimerActive] = useState(false);
   const [task, setTask] = useState('');
   const [startTime, setStartTime] = useState(null);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [recentTasks, setRecentTasks] = useState([]);
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
+
+  // Authentication check
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate('/login');
+      } else {
+        setUser(user);
+        fetchRecentTasks(user.id);
+      }
+    };
+    getUser();
+  }, [navigate]);
+
+  // Fetch recent tasks from Supabase
+  const fetchRecentTasks = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+      setRecentTasks(data || []);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    }
+  };
 
   const playClickSound = () => {
     const context = new (window.AudioContext || window.webkitAudioContext)();
@@ -25,20 +60,6 @@ function Timer({ setIsTimerActive }) {
   };
 
   useEffect(() => {
-    const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-    const recentFiveTasks = allTasks
-      .sort((a, b) => new Date(b.startTime) - new Date(a.startTime))
-      .slice(0, 5);
-    setRecentTasks(recentFiveTasks);
-  }, []);
-
-  useEffect(() => {
-    const storedTimerState = localStorage.getItem('isTimerActive') === 'true';
-    setIsTimerLocalActive(storedTimerState);
-    setIsTimerActive(storedTimerState);
-  }, [setIsTimerActive]);
-
-  useEffect(() => {
     let intervalId;
     if (isTimerActive && startTime) {
       intervalId = setInterval(() => {
@@ -54,9 +75,7 @@ function Timer({ setIsTimerActive }) {
       playClickSound();
       const now = Date.now();
       setStartTime(now);
-      setIsTimerLocalActive(true);
       setIsTimerActive(true);
-      localStorage.setItem('isTimerActive', 'true');
     }
   };
 
@@ -66,29 +85,63 @@ function Timer({ setIsTimerActive }) {
     }
   };
 
-  const endTimer = () => {
+  const endTimer = async () => {
     playClickSound();
-    setIsTimerLocalActive(false);
     setIsTimerActive(false);
-    localStorage.setItem('isTimerActive', 'false');
     
     const endTime = new Date().toISOString();
     const newTask = {
-      id: Date.now(),
-      name: task,
+      task_name: task,
       duration: elapsedTime,
-      startTime: startTime ? new Date(startTime).toISOString() : null,
-      endTime: endTime,
-      leverage: ''
+      start_time: startTime ? new Date(startTime).toISOString() : null,
+      end_time: endTime,
+      leverage: '',
+      user_id: user.id,
+      created_at: new Date().toISOString()
     };
 
-    const existingTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-    localStorage.setItem('allTasks', JSON.stringify([...existingTasks, newTask]));
-    
-    setTask('');
-    setElapsedTime(0);
-    setStartTime(null);
-    setRecentTasks([newTask, ...recentTasks.slice(0, 4)]);
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .insert([newTask]);
+
+      if (error) throw error;
+      
+      setTask('');
+      setElapsedTime(0);
+      setStartTime(null);
+      fetchRecentTasks(user.id);
+    } catch (error) {
+      console.error("Error adding task:", error);
+    }
+  };
+
+  const updateTaskLeverage = async (taskId, leverage) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ leverage })
+        .eq('id', taskId);
+
+      if (error) throw error;
+      fetchRecentTasks(user.id);
+    } catch (error) {
+      console.error("Error updating task:", error);
+    }
+  };
+
+  const deleteTask = async (taskId) => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', taskId);
+
+      if (error) throw error;
+      fetchRecentTasks(user.id);
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
   };
 
   const formatTime = (seconds) => {
@@ -105,22 +158,6 @@ function Timer({ setIsTimerActive }) {
       minute: '2-digit',
       hour12: true
     });
-  };
-
-  const updateTaskLeverage = (taskId, leverage) => {
-    const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-    const updatedTasks = allTasks.map(task => 
-      task.id === taskId ? { ...task, leverage } : task
-    );
-    localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
-    setRecentTasks(updatedTasks.slice(-5).reverse());
-  };
-
-  const deleteTask = (taskId) => {
-    const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-    const updatedTasks = allTasks.filter(task => task.id !== taskId);
-    localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
-    setRecentTasks(updatedTasks.slice(-5).reverse());
   };
 
   return (
@@ -157,9 +194,9 @@ function Timer({ setIsTimerActive }) {
                     className="flex items-center justify-between p-3 bg-gray-50 rounded"
                   >
                     <div>
-                      <div className="font-medium">{task.name}</div>
+                      <div className="font-medium">{task.task_name}</div>
                       <div className="text-sm text-gray-500">
-                        {formatTime(task.duration)} • {formatDateTime(task.startTime)} - {formatDateTime(task.endTime)}
+                        {formatTime(task.duration)} • {formatDateTime(task.start_time)} - {formatDateTime(task.end_time)}
                       </div>
                     </div>
                     <div className="flex items-center space-x-4">
