@@ -1,24 +1,24 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
-import { getAnalytics } from "firebase/analytics";
-// Your web app's Firebase configuration
-// Replace these values with your Firebase project config
 const firebaseConfig = {
-  apiKey: "AIzaSyB5TkViVNrFStAFPE7HWkPm97hN9c7NLy8",
-  authDomain: "wheredidtimego-679b4.firebaseapp.com",
-  projectId: "wheredidtimego-679b4",
-  storageBucket: "wheredidtimego-679b4.firebasestorage.app",
-  messagingSenderId: "417767684649",
-  appId: "1:417767684649:web:12a5e278b27f3cfd367a38",
-  measurementId: "G-LLXVJM9414"
+  apiKey: "AIzaSyDGTJpBmQtqOg_hRvtbwIZIw6c4qPGzYVc",
+  authDomain: "timewell-c0b5f.firebaseapp.com",
+  projectId: "timewell-c0b5f",
+  storageBucket: "timewell-c0b5f.appspot.com",
+  messagingSenderId: "1095371085844",
+  appId: "1:1095371085844:web:c0c5c2e2d6e0a5c0c9c9c9",
+  measurementId: "G-XXXXXXXXXX"  // Replace with your actual measurement ID if you have one
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-const analytics = getAnalytics(app);
-
 // Initialize Firebase Authentication and get a reference to the service
 export const auth = getAuth(app);
+
+// Initialize Cloud Firestore and get a reference to the service
+export const db = getFirestore(app);
+
 export default app;
