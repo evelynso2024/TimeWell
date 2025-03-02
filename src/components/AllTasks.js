@@ -5,6 +5,13 @@ import { supabase } from '../supabaseClient';
 function AllTasks() {
   const [tasks, setTasks] = useState([]);
   const [user, setUser] = useState(null);
+  const [showAddTask, setShowAddTask] = useState(false);
+  const [newTask, setNewTask] = useState({
+    task_name: '',
+    date: '',
+    start_time: '',
+    duration: '',
+  });
   const navigate = useNavigate();
 
   // Authentication check
@@ -75,6 +82,42 @@ function AllTasks() {
     }
   };
 
+  const handleAddTask = async (e) => {
+    e.preventDefault();
+    try {
+      // Convert duration string (HH:MM:SS) to seconds
+      const [hours, minutes, seconds] = newTask.duration.split(':').map(Number);
+      const durationInSeconds = (hours * 3600) + (minutes * 60) + seconds;
+
+      // Combine date and time for start_time
+      const startDateTime = new Date(newTask.date + 'T' + newTask.start_time);
+      
+      const { error } = await supabase
+        .from('tasks')
+        .insert([{
+          task_name: newTask.task_name,
+          start_time: startDateTime.toISOString(),
+          duration: durationInSeconds,
+          user_id: user.id,
+          created_at: new Date().toISOString()
+        }]);
+
+      if (error) throw error;
+
+      // Reset form and fetch updated tasks
+      setNewTask({
+        task_name: '',
+        date: '',
+        start_time: '',
+        duration: ''
+      });
+      setShowAddTask(false);
+      fetchTasks(user.id);
+    } catch (error) {
+      console.error("Error adding task:", error);
+    }
+  };
+
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -88,6 +131,15 @@ function AllTasks() {
       hour: '2-digit',
       minute: '2-digit',
       hour12: true
+    });
+  };
+
+  const formatDate = (isoString) => {
+    if (!isoString) return '';
+    return new Date(isoString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
   };
 
@@ -131,7 +183,81 @@ function AllTasks() {
 
       {/* All Tasks Content */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">All Tasks</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">All Tasks</h2>
+          <button
+            onClick={() => setShowAddTask(!showAddTask)}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            {showAddTask ? 'Cancel' : 'Add Task'}
+          </button>
+        </div>
+
+        {/* Manual Task Entry Form */}
+        {showAddTask && (
+          <form onSubmit={handleAddTask} className="mb-6 p-4 bg-gray-50 rounded">
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Task Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newTask.task_name}
+                  onChange={(e) => setNewTask({...newTask, task_name: e.target.value})}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Date
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={newTask.date}
+                  onChange={(e) => setNewTask({...newTask, date: e.target.value})}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Start Time
+                </label>
+                <input
+                  type="time"
+                  required
+                  value={newTask.start_time}
+                  onChange={(e) => setNewTask({...newTask, start_time: e.target.value})}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Duration (HH:MM:SS)
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="00:00:00"
+                  pattern="[0-9]{2}:[0-9]{2}:[0-9]{2}"
+                  value={newTask.duration}
+                  onChange={(e) => setNewTask({...newTask, duration: e.target.value})}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+              <button
+                type="submit"
+                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+              >
+                Save Task
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* Tasks List */}
         <div className="space-y-4">
           <ul className="space-y-3">
             {tasks.map((task) => (
@@ -142,7 +268,10 @@ function AllTasks() {
                 <div>
                   <div className="font-medium">{task.task_name}</div>
                   <div className="text-sm text-gray-500">
-                    {formatTime(task.duration)} • {formatDateTime(task.start_time)} - {formatDateTime(task.end_time)}
+                    {formatDate(task.start_time)}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {formatTime(task.duration)} • {formatDateTime(task.start_time)}
                   </div>
                 </div>
                 <div className="flex items-center space-x-4">
