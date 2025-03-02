@@ -59,7 +59,7 @@ function Timer() {
             task_name: taskName,
             duration: duration,
             user_id: user.id,
-            created_at: new Date()
+            created_at: new Date().toISOString()
           }
         ]);
 
