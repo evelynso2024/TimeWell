@@ -1,27 +1,39 @@
 import React, { useState, useEffect } from 'react';
-import { auth } from '../firebase';
-import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
 
 function Insights() {
+  const navigate = useNavigate();
   const [insights, setInsights] = useState({
     mostProductiveTime: '',
     totalHighImpactHours: 0,
     peakHour: '',
     totalTasks: 0
   });
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    if (auth.currentUser) {
-      analyzeTimePatterns();
-    }
-  }, []);
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate('/login');
+      } else {
+        setUser(user);
+        analyzeTimePatterns(user.id);
+      }
+    };
+    getUser();
+  }, [navigate]);
 
-  const analyzeTimePatterns = async () => {
-    const firestore = getFirestore();
+  const analyzeTimePatterns = async (userId) => {
     try {
-      const tasksRef = collection(firestore, 'tasks');
-      const q = query(tasksRef, where('userId', '==', auth.currentUser.uid));
-      const querySnapshot = await getDocs(q);
+      const { data: tasks, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('leverage', 'High');
+
+      if (error) throw error;
 
       // Initialize time slots for 24 hours
       const hourlyData = {};
@@ -34,10 +46,9 @@ function Insights() {
       let peakHour = 0;
       let completedTasks = 0;
 
-      querySnapshot.forEach((doc) => {
-        const task = doc.data();
-        if (task.completed && task.startTime && task.leverage === 'High') {
-          const hour = task.startTime.toDate().getHours();
+      tasks.forEach((task) => {
+        if (task.start_time) {
+          const hour = new Date(task.start_time).getHours();
           const duration = task.duration || 0;
           
           hourlyData[hour].high += duration;
@@ -53,7 +64,7 @@ function Insights() {
 
       setInsights({
         mostProductiveTime: getPeriodOfDay(peakHour),
-        totalHighImpactHours: Math.round(totalHighImpactMinutes / 60 * 10) / 10,
+        totalHighImpactHours: Math.round((totalHighImpactMinutes / 60) * 10) / 10,
         peakHour: formatHour(peakHour),
         totalTasks: completedTasks
       });
@@ -75,6 +86,36 @@ function Insights() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
+      {/* Navigation Bar */}
+      <div className="mb-6 flex justify-between items-center">
+        <div className="flex space-x-4">
+          <button
+            onClick={() => navigate('/timer')}
+            className="bg-white text-black px-4 py-2 rounded border border-gray-300 hover:bg-gray-100"
+          >
+            Timer
+          </button>
+          <button
+            onClick={() => navigate('/alltasks')}
+            className="bg-white text-black px-4 py-2 rounded border border-gray-300 hover:bg-gray-100"
+          >
+            All Tasks
+          </button>
+          <button
+            onClick={() => navigate('/summary')}
+            className="bg-white text-black px-4 py-2 rounded border border-gray-300 hover:bg-gray-100"
+          >
+            Summary
+          </button>
+          <button
+            onClick={() => navigate('/insights')}
+            className="bg-white text-black px-4 py-2 rounded border border-gray-300 hover:bg-gray-100"
+          >
+            Insights
+          </button>
+        </div>
+      </div>
+
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800">Your Productivity Insights</h1>
         <p className="text-gray-600 mt-2">Understanding your high-impact work patterns</p>
