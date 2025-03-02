@@ -2,7 +2,6 @@ import React from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import { useEffect, useState } from 'react';
-import Navbar from './NavBar';  // Updated to match the correct filename NavBar.jsx
 import { useNavigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 
@@ -50,7 +49,6 @@ function AllTask() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <Navbar />
       <div className="container mx-auto p-4">
         <h1 className="text-2xl font-bold mb-4">All Tasks</h1>
         <div className="space-y-4">
