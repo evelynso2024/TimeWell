@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
+import { supabase } from '../../supabaseClient';
 import logo from '../assets/logo.png';
+
+
 
 function Login() {
   const [email, setEmail] = useState('');
