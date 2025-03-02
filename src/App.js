@@ -4,7 +4,7 @@ import Timer from './components/Timer';
 import AllTasks from './components/AllTasks';
 import Summary from './components/Summary';
 import Insights from './components/Insights';
-import Login from './components/Login';
+import Login from './components/auth/Login';
 import { supabase } from './supabaseClient';
 
 function App() {
