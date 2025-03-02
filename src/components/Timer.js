@@ -85,6 +85,16 @@ function Timer() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      navigate('/login');
+    } catch (error) {
+      console.error("Error logging out:", error.message);
+    }
+  };
+
   const endTimer = async () => {
     playClickSound();
     setIsTimerActive(false);
@@ -162,6 +172,43 @@ function Timer() {
 
   return (
     <div className="max-w-2xl mx-auto p-6">
+      {/* Navigation Bar */}
+      <div className="mb-6 flex justify-between items-center">
+        <div className="flex space-x-4">
+          <button
+            onClick={() => navigate('/timer')}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            Timer
+          </button>
+          <button
+            onClick={() => navigate('/alltasks')}
+            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+          >
+            All Tasks
+          </button>
+          <button
+            onClick={() => navigate('/summary')}
+            className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
+          >
+            Summary
+          </button>
+          <button
+            onClick={() => navigate('/insights')}
+            className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
+          >
+            Insights
+          </button>
+        </div>
+        <button
+          onClick={handleLogout}
+          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+        >
+          Logout
+        </button>
+      </div>
+
+      {/* Timer Content */}
       {!isTimerActive ? (
         <>
           <div className="bg-white rounded-lg shadow p-6 mb-6">
