@@ -1,8 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './components/Login';
-import Timer from './components/Timer';
-import AllTasks from './components/AllTasks';
+import Login from './component/auth/Login';
+import Timer from './component/Timer';
+import AllTasks from './component/AllTasks';
 
 function App() {
   return (
