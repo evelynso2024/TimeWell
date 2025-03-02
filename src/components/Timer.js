@@ -1,209 +1,164 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
 
-function Timer({ setIsTimerActive }) {
-  const [isTimerActive, setIsTimerLocalActive] = useState(false);
-  const [task, setTask] = useState('');
-  const [startTime, setStartTime] = useState(null);
-  const [elapsedTime, setElapsedTime] = useState(0);
-  const [recentTasks, setRecentTasks] = useState([]);
-
-  const playClickSound = () => {
-    const context = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    
-    oscillator.connect(gain);
-    gain.connect(context.destination);
-    
-    oscillator.type = 'sine';
-    oscillator.frequency.value = 400;
-    gain.gain.value = 0.4;
-    
-    oscillator.start(context.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.00001, context.currentTime + 0.06);
-    oscillator.stop(context.currentTime + 0.06);
-  };
+function Timer() {
+  const [taskName, setTaskName] = useState('');
+  const [duration, setDuration] = useState('');
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [isRunning, setIsRunning] = useState(false);
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-    const recentFiveTasks = allTasks
-      .sort((a, b) => new Date(b.startTime) - new Date(a.startTime))
-      .slice(0, 5);
-    setRecentTasks(recentFiveTasks);
-  }, []);
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate('/login');
+      } else {
+        setUser(user);
+      }
+    };
+    getUser();
+  }, [navigate]);
 
   useEffect(() => {
-    const storedTimerState = localStorage.getItem('isTimerActive') === 'true';
-    setIsTimerLocalActive(storedTimerState);
-    setIsTimerActive(storedTimerState);
-  }, [setIsTimerActive]);
-
-  useEffect(() => {
-    let intervalId;
-    if (isTimerActive && startTime) {
-      intervalId = setInterval(() => {
-        const currentElapsed = Math.floor((Date.now() - startTime) / 1000);
-        setElapsedTime(currentElapsed);
+    let timer;
+    if (isRunning && timeLeft > 0) {
+      timer = setInterval(() => {
+        setTimeLeft((prevTime) => prevTime - 1);
       }, 1000);
+    } else if (timeLeft === 0) {
+      setIsRunning(false);
     }
-    return () => clearInterval(intervalId);
-  }, [isTimerActive, startTime]);
+    return () => clearInterval(timer);
+  }, [isRunning, timeLeft]);
 
   const startTimer = () => {
-    if (task.trim()) {
-      playClickSound();
-      const now = Date.now();
-      setStartTime(now);
-      setIsTimerLocalActive(true);
-      setIsTimerActive(true);
-      localStorage.setItem('isTimerActive', 'true');
+    if (duration && duration > 0) {
+      setTimeLeft(duration * 60);
+      setIsRunning(true);
     }
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && task.trim()) {
+  const stopTimer = () => {
+    setIsRunning(false);
+  };
+
+  const resetTimer = () => {
+    setIsRunning(false);
+    setTimeLeft(0);
+  };
+
+  const addTask = async () => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .insert([
+          {
+            task_name: taskName,
+            duration: duration,
+            user_id: user.id,
+            created_at: new Date()
+          }
+        ]);
+
+      if (error) throw error;
+      
+      setTaskName('');
+      setDuration('');
       startTimer();
+    } catch (error) {
+      console.error("Error adding task: ", error);
     }
-  };
-
-  const endTimer = () => {
-    playClickSound();
-    setIsTimerLocalActive(false);
-    setIsTimerActive(false);
-    localStorage.setItem('isTimerActive', 'false');
-    
-    const endTime = new Date().toISOString();
-    const newTask = {
-      id: Date.now(),
-      name: task,
-      duration: elapsedTime,
-      startTime: startTime ? new Date(startTime).toISOString() : null,
-      endTime: endTime,
-      leverage: ''
-    };
-
-    const existingTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-    localStorage.setItem('allTasks', JSON.stringify([...existingTasks, newTask]));
-    
-    setTask('');
-    setElapsedTime(0);
-    setStartTime(null);
-    setRecentTasks([newTask, ...recentTasks.slice(0, 4)]);
   };
 
   const formatTime = (seconds) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const formatDateTime = (isoString) => {
-    if (!isoString) return '';
-    return new Date(isoString).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
-
-  const updateTaskLeverage = (taskId, leverage) => {
-    const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-    const updatedTasks = allTasks.map(task => 
-      task.id === taskId ? { ...task, leverage } : task
-    );
-    localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
-    setRecentTasks(updatedTasks.slice(-5).reverse());
-  };
-
-  const deleteTask = (taskId) => {
-    const allTasks = JSON.parse(localStorage.getItem('allTasks') || '[]');
-    const updatedTasks = allTasks.filter(task => task.id !== taskId);
-    localStorage.setItem('allTasks', JSON.stringify(updatedTasks));
-    setRecentTasks(updatedTasks.slice(-5).reverse());
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      navigate('/login');
+    } catch (error) {
+      console.error("Error logging out:", error.message);
+    }
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      {!isTimerActive ? (
-        <>
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
+    <div className="min-h-screen bg-gray-100">
+      <div className="container mx-auto p-4">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">Timer</h1>
+          <button
+            onClick={handleLogout}
+            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+          >
+            Logout
+          </button>
+        </div>
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <div className="mb-4">
+            <label className="block text-gray-700 mb-2">Task Name</label>
             <input
               type="text"
-              value={task}
-              onChange={(e) => setTask(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="What are you working on?"
-              className="w-full p-4 text-xl border rounded mb-4"
-              autoFocus
+              value={taskName}
+              onChange={(e) => setTaskName(e.target.value)}
+              className="w-full p-2 border rounded"
+              placeholder="Enter task name"
             />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700 mb-2">Duration (minutes)</label>
+            <input
+              type="number"
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+              className="w-full p-2 border rounded"
+              placeholder="Enter duration in minutes"
+            />
+          </div>
+          <button
+            onClick={addTask}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            Start Task
+          </button>
+        </div>
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="text-6xl font-bold text-center mb-4">
+            {formatTime(timeLeft)}
+          </div>
+          <div className="flex justify-center space-x-4">
+            {!isRunning ? (
+              <button
+                onClick={startTimer}
+                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                disabled={!timeLeft}
+              >
+                Start
+              </button>
+            ) : (
+              <button
+                onClick={stopTimer}
+                className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
+              >
+                Pause
+              </button>
+            )}
             <button
-              onClick={startTimer}
-              disabled={!task.trim()}
-              className={`w-full p-4 rounded text-white text-xl
-                ${task.trim() ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-300'}`}
+              onClick={resetTimer}
+              className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
             >
-              Start Timer
-            </button>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">Recent Tasks</h2>
-            <div className="space-y-4">
-              <ul className="space-y-3">
-                {recentTasks.map((task) => (
-                  <li 
-                    key={task.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded"
-                  >
-                    <div>
-                      <div className="font-medium">{task.name}</div>
-                      <div className="text-sm text-gray-500">
-                        {formatTime(task.duration)} • {formatDateTime(task.startTime)} - {formatDateTime(task.endTime)}
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <select
-                        value={task.leverage || ''}
-                        onChange={(e) => updateTaskLeverage(task.id, e.target.value)}
-                        className="p-2 border rounded text-sm bg-white"
-                      >
-                        <option value="">Rank</option>
-                        <option value="High">High impact</option>
-                        <option value="Medium">Medium impact</option>
-                        <option value="Low">Low impact</option>
-                      </select>
-                      <button
-                        onClick={() => deleteTask(task.id)}
-                        className="text-red-500 hover:text-red-700 font-bold"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </>
-      ) : (
-        <div className="bg-white rounded-lg shadow p-6 text-center">
-          <div className="text-4xl font-bold mb-4 text-gray-800">
-            {task}
-          </div>
-          <div className="text-3xl font-mono mb-6 text-gray-600">
-            {formatTime(elapsedTime)}
-          </div>
-          <div className="flex justify-center">
-            <button
-              onClick={endTimer}
-              className="w-1/3 bg-red-500 text-white px-8 py-3 rounded hover:bg-red-600"
-            >
-              End Timer
+              Reset
             </button>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
