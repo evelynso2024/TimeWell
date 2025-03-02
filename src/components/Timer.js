@@ -85,15 +85,17 @@ function Timer() {
     }
   };
 
+ 
+
   const handleLogout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      navigate('/login');
-    } catch (error) {
-      console.error("Error logging out:", error.message);
-    }
-  };
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+    navigate('/'); // Changed from '/login' to '/' to go to landing page
+  } catch (error) {
+    console.error("Error logging out:", error.message);
+  }
+};
 
   const endTimer = async () => {
     playClickSound();
