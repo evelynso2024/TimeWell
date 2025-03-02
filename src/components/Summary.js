@@ -1,32 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
 
 function Summary() {
-  const [user, setUser] = useState(null);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate('/login');
-      } else {
-        setUser(user);
-      }
-    };
-    getUser();
-  }, [navigate]);
-
-  const handleLogout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      navigate('/login');
-    } catch (error) {
-      console.error("Error logging out:", error);
-    }
-  };
 
   return (
     <div className="max-w-2xl mx-auto p-6">
@@ -58,12 +34,6 @@ function Summary() {
             Insights
           </button>
         </div>
-        <button
-          onClick={handleLogout}
-          className="bg-white text-black px-4 py-2 rounded border border-gray-300 hover:bg-gray-100"
-        >
-          Logout
-        </button>
       </div>
 
       {/* Test Content */}
