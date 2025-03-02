@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -21,6 +22,11 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
+      if (!email || !password) {
+        setError('Please enter both email and password');
+        return;
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -39,15 +45,33 @@ function Login() {
   const handleSignup = async (e) => {
     e.preventDefault();
     try {
+      if (!email || !password) {
+        setError('Please enter both email and password');
+        return;
+      }
+
+      if (password.length < 6) {
+        setError('Password must be at least 6 characters long');
+        return;
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('seconds')) {
+          setError('Please wait a moment before trying again');
+        } else {
+          setError(error.message);
+        }
+        return;
+      }
 
       if (data.user) {
-        navigate('/timer');
+        setMessage('Registration successful! Please check your email for verification.');
+        // Don't navigate immediately after signup as they need to verify email
       }
     } catch (error) {
       setError(error.message);
@@ -59,6 +83,7 @@ function Login() {
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
         <h2 className="text-3xl font-bold text-center mb-8">TimeWell</h2>
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+        {message && <p className="text-green-500 text-center mb-4">{message}</p>}
         <form className="space-y-6">
           <div>
             <label className="block text-gray-700">Email</label>
@@ -97,6 +122,11 @@ function Login() {
             </button>
           </div>
         </form>
+        <div className="mt-4 text-center">
+          <Link to="/" className="text-blue-500 hover:text-blue-600">
+            Back to Home
+          </Link>
+        </div>
       </div>
     </div>
   );
