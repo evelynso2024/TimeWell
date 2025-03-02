@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
-import logo from '../assets/logo.png';
-
-
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -60,9 +57,6 @@ function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
-        <div className="flex justify-center mb-8">
-          <img src={logo} alt="TimeWell Logo" className="h-16" />
-        </div>
         <h2 className="text-3xl font-bold text-center mb-8">TimeWell</h2>
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
         <form className="space-y-6">
