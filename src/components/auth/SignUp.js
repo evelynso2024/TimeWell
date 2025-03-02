@@ -3,7 +3,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 
 function SignUp() {
-  // Add this line here, right after the function SignUp() {
   console.log('Supabase Client:', supabase);
 
   const navigate = useNavigate();
@@ -13,10 +12,7 @@ function SignUp() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-
-
-
-    const handleSignUp = async (e) => {
+  const handleSignUp = async (e) => {
     e.preventDefault();
     
     // Basic validation
@@ -34,26 +30,19 @@ function SignUp() {
       setError('');
       setLoading(true);
       
-      console.log('Attempting to sign up with:', email); // Debug log
-      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
 
-      console.log('Signup response:', { data, error }); // Debug log
-
-      if (error) {
-        console.error('Signup error:', error); // Debug log
-        throw error;
-      }
+      if (error) throw error;
 
       if (data.user) {
-        console.log('User created successfully:', data.user); // Debug log
-        navigate('/timer');
+        // Show success message in a more visible way
+        alert('Thank you for signing up! Please check your email to confirm your account.');
+        navigate('/login'); // Navigate to login page after signup
       }
     } catch (error) {
-      console.error('Error in signup:', error.message); // Debug log
       setError(error.message);
     } finally {
       setLoading(false);
