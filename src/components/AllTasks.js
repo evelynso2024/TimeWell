@@ -2,10 +2,9 @@ import React from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db, auth } from '../firebase'; // Updated path with ../
 import { useEffect, useState } from 'react';
-import Navbar from './Navbar';
+import Navbar from '../Navbar';
 import { useNavigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
-
 
 
 
