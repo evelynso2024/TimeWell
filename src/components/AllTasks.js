@@ -1,12 +1,10 @@
 import React from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db, auth } from '../firebase'; // Updated path with ../
+import { db, auth } from '../firebase';
 import { useEffect, useState } from 'react';
-import Navbar from '../Navbar';
+import Navbar from './NavBar';  // Updated to match the correct filename NavBar.jsx
 import { useNavigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
-
-
 
 function AllTask() {
   const [tasks, setTasks] = useState([]);
