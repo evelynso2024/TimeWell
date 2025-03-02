@@ -13,7 +13,10 @@ function SignUp() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSignUp = async (e) => {
+
+
+
+    const handleSignUp = async (e) => {
     e.preventDefault();
     
     // Basic validation
@@ -31,17 +34,26 @@ function SignUp() {
       setError('');
       setLoading(true);
       
+      console.log('Attempting to sign up with:', email); // Debug log
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
 
-      if (error) throw error;
+      console.log('Signup response:', { data, error }); // Debug log
+
+      if (error) {
+        console.error('Signup error:', error); // Debug log
+        throw error;
+      }
 
       if (data.user) {
-        navigate('/timer'); // Redirect to timer after successful signup
+        console.log('User created successfully:', data.user); // Debug log
+        navigate('/timer');
       }
     } catch (error) {
+      console.error('Error in signup:', error.message); // Debug log
       setError(error.message);
     } finally {
       setLoading(false);
