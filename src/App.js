@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
 import Timer from './components/Timer';
 import AllTasks from './components/AllTasks';
@@ -12,8 +12,11 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
+        
+        {/* Protected routes */}
         <Route path="/timer" element={<Timer />} />
         <Route path="/alltasks" element={<AllTasks />} />
         <Route path="/summary" element={<Summary />} />
