@@ -16,13 +16,22 @@ function Timer() {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        navigate('/login');
+        navigate('/'); // Changed to redirect to landing page
       } else {
         setUser(user);
         fetchRecentTasks(user.id);
       }
     };
     getUser();
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        navigate('/');
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   // Fetch recent tasks from Supabase
@@ -85,17 +94,15 @@ function Timer() {
     }
   };
 
- 
-
   const handleLogout = async () => {
-  try {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-    navigate('/'); // Changed from '/login' to '/' to go to landing page
-  } catch (error) {
-    console.error("Error logging out:", error.message);
-  }
-};
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      navigate('/'); // Changed to redirect to landing page
+    } catch (error) {
+      console.error("Error logging out:", error.message);
+    }
+  };
 
   const endTimer = async () => {
     playClickSound();
