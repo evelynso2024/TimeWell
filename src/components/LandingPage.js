@@ -1,31 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import Timer from './Timer';
-import { supabase } from '../supabaseClient';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 function LandingPage() {
   const navigate = useNavigate();
-  const [isTimerActive, setIsTimerActive] = useState(false);
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-    };
-    getUser();
-  }, []);
-
-  const handleSignOut = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (!error) {
-        navigate('/login');
-      }
-    } catch (error) {
-      console.error("Error signing out:", error);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -37,29 +14,18 @@ function LandingPage() {
               <span className="text-2xl font-bold text-blue-600">TimeWell</span>
             </div>
             <div className="flex items-center space-x-4">
-              {user ? (
-                <>
-                  <button
-                    onClick={() => navigate('/alltasks')}
-                    className="text-gray-600 hover:text-gray-900"
-                  >
-                    View All Tasks
-                  </button>
-                  <button
-                    onClick={handleSignOut}
-                    className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition duration-200"
-                  >
-                    Sign Out
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={() => navigate('/login')}
-                  className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition duration-200"
-                >
-                  Sign In
-                </button>
-              )}
+              <button
+                onClick={() => navigate('/login')}
+                className="text-gray-600 hover:text-gray-900 px-4 py-2"
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => navigate('/signup')}
+                className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition duration-200"
+              >
+                Sign Up
+              </button>
             </div>
           </div>
         </div>
@@ -75,20 +41,13 @@ function LandingPage() {
             <p className="text-xl mb-8 text-blue-100">
               A smarter way to stay focused and be mindful of how you spend your time.
             </p>
-            {!user && (
-              <button
-                onClick={() => navigate('/login')}
-                className="bg-white text-blue-600 px-8 py-3 rounded-lg text-lg font-semibold hover:bg-blue-50 transition duration-200"
-              >
-                Get Started - It's Free
-              </button>
-            )}
+            <button
+              onClick={() => navigate('/signup')}
+              className="bg-white text-blue-600 px-8 py-3 rounded-lg text-lg font-semibold hover:bg-blue-50 transition duration-200"
+            >
+              Get Started - It's Free
+            </button>
           </div>
-        </div>
-
-        {/* Timer Section */}
-        <div className="max-w-6xl mx-auto px-4 py-12">
-          <Timer setIsTimerActive={setIsTimerActive} />
         </div>
 
         {/* Features Section */}
