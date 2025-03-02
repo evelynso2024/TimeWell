@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './components/Login';
 import Timer from './components/Timer';
 import AllTasks from './components/AllTasks';
-import { supabase } from './supabaseClient';
 
 function App() {
   return (
@@ -12,24 +11,8 @@ function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/login" />} />
           <Route path="/login" element={<Login />} />
-          <Route
-            path="/timer"
-            element={
-              <div>
-                <Navigation />
-                <Timer />
-              </div>
-            }
-          />
-          <Route
-            path="/alltask"
-            element={
-              <div>
-                <Navigation />
-                <AllTask />
-              </div>
-            }
-          />
+          <Route path="/timer" element={<Timer />} />
+          <Route path="/alltasks" element={<AllTasks />} />
         </Routes>
       </div>
     </Router>
