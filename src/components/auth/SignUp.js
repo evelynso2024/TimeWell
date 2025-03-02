@@ -3,6 +3,9 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
 
 function SignUp() {
+  // Add this line here, right after the function SignUp() {
+  console.log('Supabase Client:', supabase);
+
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
