@@ -23,7 +23,7 @@ function LandingPage() {
         navigate('/login');
       }
     } catch (error) {
-      console.error("Error signing out:", error.message);
+      console.error("Error signing out:", error);
     }
   };
 
@@ -88,14 +88,79 @@ function LandingPage() {
 
         {/* Timer Section */}
         <div className="max-w-6xl mx-auto px-4 py-12">
-          <Timer />
+          <Timer setIsTimerActive={setIsTimerActive} />
         </div>
 
-        {/* Rest of your landing page content remains the same */}
         {/* Features Section */}
+        <div className="bg-white py-16">
+          <div className="max-w-6xl mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-12">Why Choose TimeWell?</h2>
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="text-center p-6">
+                <div className="text-blue-500 text-4xl mb-4">⏱️</div>
+                <h3 className="text-xl font-semibold mb-3">Simple Time Tracking</h3>
+                <p className="text-gray-600">Start tracking your time with just one click. No complicated setup required.</p>
+              </div>
+              <div className="text-center p-6">
+                <div className="text-blue-500 text-4xl mb-4">📊</div>
+                <h3 className="text-xl font-semibold mb-3">Task Analytics</h3>
+                <p className="text-gray-600">Get insights into how you spend your time with detailed task analytics.</p>
+              </div>
+              <div className="text-center p-6">
+                <div className="text-blue-500 text-4xl mb-4">🎯</div>
+                <h3 className="text-xl font-semibold mb-3">Impact Tracking</h3>
+                <p className="text-gray-600">Identify and focus on your highest-leverage activities.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* How It Works Section */}
+        <div className="py-16">
+          <div className="max-w-6xl mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
+            <div className="grid md:grid-cols-4 gap-8">
+              <div className="text-center">
+                <div className="bg-blue-100 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
+                  <span className="text-blue-600 font-bold">1</span>
+                </div>
+                <h3 className="font-semibold mb-2">Sign Up</h3>
+                <p className="text-gray-600">Create your free account</p>
+              </div>
+              <div className="text-center">
+                <div className="bg-blue-100 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
+                  <span className="text-blue-600 font-bold">2</span>
+                </div>
+                <h3 className="font-semibold mb-2">Add Task</h3>
+                <p className="text-gray-600">Enter your task name</p>
+              </div>
+              <div className="text-center">
+                <div className="bg-blue-100 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
+                  <span className="text-blue-600 font-bold">3</span>
+                </div>
+                <h3 className="font-semibold mb-2">Start Timer</h3>
+                <p className="text-gray-600">Click to start tracking</p>
+              </div>
+              <div className="text-center">
+                <div className="bg-blue-100 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
+                  <span className="text-blue-600 font-bold">4</span>
+                </div>
+                <h3 className="font-semibold mb-2">Rate Impact</h3>
+                <p className="text-gray-600">Evaluate task leverage</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Footer */}
-        {/* ... */}
+        <footer className="bg-gray-800 text-white py-8">
+          <div className="max-w-6xl mx-auto px-4">
+            <div className="text-center">
+              <h3 className="text-2xl font-bold mb-4">TimeWell</h3>
+              <p className="text-gray-400">© 2024 TimeWell. All rights reserved.</p>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );
