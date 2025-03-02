@@ -12,20 +12,17 @@ function Timer() {
   const navigate = useNavigate();
 
   // Authentication check
-  
-
-    useEffect(() => {
+  useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        navigate('/'); // This is correct - sends to landing page
+        navigate('/');
       } else {
         setUser(user);
         fetchRecentTasks(user.id);
       }
     };
     getUser();
-  }, [navigate]);
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -97,18 +94,15 @@ function Timer() {
     }
   };
 
-
   const handleLogout = async () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      navigate('/'); // Changed from '/login' to '/' to go to landing page
+      navigate('/');
     } catch (error) {
       console.error("Error logging out:", error.message);
     }
   };
-
-
 
   const endTimer = async () => {
     playClickSound();
