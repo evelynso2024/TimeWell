@@ -6,7 +6,6 @@ function Summary() {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
-  // Authentication check
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -67,10 +66,10 @@ function Summary() {
         </button>
       </div>
 
-      {/* Basic Summary Content */}
+      {/* Test Content */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">Summary</h2>
-        <p>Summary content will go here</p>
+        <h2 className="text-xl font-semibold mb-4">Summary Page</h2>
+        <p>This is a test to make sure the Summary page is working.</p>
       </div>
     </div>
   );
