@@ -2,8 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/Login';
 import Timer from './components/Timer';
-import AllTask from './components/AllTasks';
-import Navigation from './components/Navigation';
+import AllTasks from './components/AllTasks';
 import { supabase } from './supabaseClient';
 
 function App() {
