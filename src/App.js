@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './components/auth/Login';
 import Timer from './components/Timer';
 import AllTasks from './components/AllTasks';
+import Summary from './components/Summary';
+import Insights from './components/Insights';
 
 function App() {
   return (
@@ -13,6 +15,8 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/timer" element={<Timer />} />
           <Route path="/alltasks" element={<AllTasks />} />
+          <Route path="/summary" element={<Summary />} />
+          <Route path="/insights" element={<Insights />} />
         </Routes>
       </div>
     </Router>
