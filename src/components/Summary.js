@@ -1,6 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import { Bar, Doughnut } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+} from 'chart.js';
+
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+);
 
 function Summary() {
   const navigate = useNavigate();
@@ -65,61 +87,93 @@ function Summary() {
     return `${hours}h ${minutes}m`;
   };
 
+  // Chart data and options
+  const barChartData = {
+    labels: ['High Impact', 'Medium Impact', 'Low Impact', 'No Ranking'],
+    datasets: [{
+      data: [
+        summaryData.highImpactTasks,
+        summaryData.mediumImpactTasks,
+        summaryData.lowImpactTasks,
+        summaryData.totalTasks - (summaryData.highImpactTasks + summaryData.mediumImpactTasks + summaryData.lowImpactTasks)
+      ],
+      backgroundColor: [
+        'rgba(34, 197, 94, 0.6)',  // green
+        'rgba(234, 179, 8, 0.6)',   // yellow
+        'rgba(239, 68, 68, 0.6)',   // red
+        'rgba(156, 163, 175, 0.6)'  // gray
+      ],
+      borderColor: [
+        'rgb(34, 197, 94)',
+        'rgb(234, 179, 8)',
+        'rgb(239, 68, 68)',
+        'rgb(156, 163, 175)'
+      ],
+      borderWidth: 1
+    }]
+  };
+
+  const donutChartData = {
+    labels: ['High Impact', 'Medium Impact', 'Low Impact'],
+    datasets: [{
+      data: [
+        summaryData.highImpactTasks,
+        summaryData.mediumImpactTasks,
+        summaryData.lowImpactTasks
+      ],
+      backgroundColor: [
+        'rgba(34, 197, 94, 0.6)',
+        'rgba(234, 179, 8, 0.6)',
+        'rgba(239, 68, 68, 0.6)'
+      ],
+      borderColor: [
+        'rgb(34, 197, 94)',
+        'rgb(234, 179, 8)',
+        'rgb(239, 68, 68)'
+      ],
+      borderWidth: 1
+    }]
+  };
+
+  const barOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        display: false
+      },
+      title: {
+        display: true,
+        text: 'Task Distribution by Impact Level'
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          stepSize: 1
+        }
+      }
+    }
+  };
+
+  const donutOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'bottom'
+      },
+      title: {
+        display: true,
+        text: 'Impact Level Distribution'
+      }
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto p-6">
       {/* Navigation Bar */}
       <nav className="bg-white shadow-sm mb-6">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex justify-between h-16">
-            {/* Left side - Logo */}
-            <div className="flex items-center">
-              <div 
-                onClick={() => navigate('/')}
-                className="text-xl font-bold text-blue-600 cursor-pointer"
-              >
-                TimeWell
-              </div>
-            </div>
-
-            {/* Middle - Navigation Links */}
-            <div className="flex items-center justify-center flex-1 px-2 space-x-8">
-              <button
-                onClick={() => navigate('/timer')}
-                className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium"
-              >
-                Timer
-              </button>
-              <button
-                onClick={() => navigate('/alltasks')}
-                className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium"
-              >
-                All Tasks
-              </button>
-              <button
-                onClick={() => navigate('/summary')}
-                className="text-blue-600 hover:text-blue-700 px-3 py-2 text-sm font-medium"
-              >
-                Summary
-              </button>
-              <button
-                onClick={() => navigate('/insights')}
-                className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium"
-              >
-                Insights
-              </button>
-            </div>
-
-            {/* Right side - Logout */}
-            <div className="flex items-center">
-              <button
-                onClick={handleLogout}
-                className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-              >
-                Log Out
-              </button>
-            </div>
-          </div>
-        </div>
+        {/* ... existing navigation code ... */}
       </nav>
 
       {/* Summary Content */}
@@ -133,6 +187,19 @@ function Summary() {
           <div className="bg-white rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold mb-2">Total Tasks</h3>
             <p className="text-3xl font-bold text-blue-600">{summaryData.totalTasks}</p>
+          </div>
+        </div>
+
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Bar Chart */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <Bar data={barChartData} options={barOptions} />
+          </div>
+
+          {/* Donut Chart */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <Doughnut data={donutChartData} options={donutOptions} />
           </div>
         </div>
 
