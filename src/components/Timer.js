@@ -183,60 +183,109 @@ function Timer() {
     <div className="max-w-2xl mx-auto p-6">
 
 
-      {/* Navigation Bar */}
-      <nav className="bg-white shadow-sm mb-6">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex justify-between h-16">
-            {/* Left side - Logo */}
-            <div className="flex items-center">
-              <div 
-                onClick={() => navigate('/')}
-                className="text-xl font-bold text-blue-600 cursor-pointer"
-              >
-                TimeWell
-              </div>
-            </div>
-
-            {/* Middle - Navigation Links */}
-            <div className="flex items-center justify-center flex-1 px-2 space-x-8">
-              <button
-                onClick={() => navigate('/timer')}
-                className="text-blue-600 hover:text-blue-700 px-3 py-2 text-sm font-medium"
-              >
-                Timer
-              </button>
-              <button
-                onClick={() => navigate('/alltasks')}
-                className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium"
-              >
-                All Tasks
-              </button>
-              <button
-                onClick={() => navigate('/summary')}
-                className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium"
-              >
-                Summary
-              </button>
-              <button
-                onClick={() => navigate('/insights')}
-                className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium"
-              >
-                Insights
-              </button>
-            </div>
-
-            {/* Right side - Logout */}
-            <div className="flex items-center">
-              <button
-                onClick={handleLogout}
-                className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-              >
-                Log Out
-              </button>
-            </div>
-          </div>
+{/* Navigation Bar */}
+<nav className="bg-white shadow-sm mb-6">
+  <div className="max-w-7xl mx-auto px-4">
+    <div className="flex justify-between h-16">
+      {/* Left side - Logo */}
+      <div className="flex items-center">
+        <div 
+          onClick={() => !isTimerActive && navigate('/')}
+          className={`text-xl font-bold ${
+            isTimerActive 
+              ? 'text-gray-400 cursor-not-allowed' 
+              : 'text-blue-600 cursor-pointer'
+          }`}
+        >
+          TimeWell
         </div>
-      </nav>
+      </div>
+
+      {/* Middle - Navigation Links */}
+      <div className="flex items-center justify-center flex-1 px-2 space-x-8">
+        <button
+          onClick={() => !isTimerActive && navigate('/timer')}
+          className={`px-3 py-2 text-sm font-medium group relative ${
+            isTimerActive 
+              ? 'text-gray-400 cursor-not-allowed' 
+              : 'text-blue-600 hover:text-blue-700'
+          }`}
+          disabled={isTimerActive}
+        >
+          Timer
+          {isTimerActive && (
+            <span className="invisible group-hover:visible absolute -bottom-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap">
+              Focus on your current task
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => !isTimerActive && navigate('/alltasks')}
+          className={`px-3 py-2 text-sm font-medium group relative ${
+            isTimerActive 
+              ? 'text-gray-400 cursor-not-allowed' 
+              : 'text-gray-600 hover:text-blue-600'
+          }`}
+          disabled={isTimerActive}
+        >
+          All Tasks
+          {isTimerActive && (
+            <span className="invisible group-hover:visible absolute -bottom-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap">
+              Focus on your current task
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => !isTimerActive && navigate('/summary')}
+          className={`px-3 py-2 text-sm font-medium group relative ${
+            isTimerActive 
+              ? 'text-gray-400 cursor-not-allowed' 
+              : 'text-gray-600 hover:text-blue-600'
+          }`}
+          disabled={isTimerActive}
+        >
+          Summary
+          {isTimerActive && (
+            <span className="invisible group-hover:visible absolute -bottom-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap">
+              Focus on your current task
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => !isTimerActive && navigate('/insights')}
+          className={`px-3 py-2 text-sm font-medium group relative ${
+            isTimerActive 
+              ? 'text-gray-400 cursor-not-allowed' 
+              : 'text-gray-600 hover:text-blue-600'
+          }`}
+          disabled={isTimerActive}
+        >
+          Insights
+          {isTimerActive && (
+            <span className="invisible group-hover:visible absolute -bottom-8 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap">
+              Focus on your current task
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Right side - Logout */}
+      <div className="flex items-center">
+        <button
+          onClick={handleLogout}
+          disabled={isTimerActive}
+          className={`inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md ${
+            isTimerActive 
+              ? 'bg-gray-400 cursor-not-allowed text-gray-200' 
+              : 'text-white bg-blue-600 hover:bg-blue-700'
+          }`}
+        >
+          Log Out
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
     
       
 
