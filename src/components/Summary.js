@@ -10,8 +10,7 @@ function Summary() {
     totalTime: 0,
     highImpactTasks: 0,
     mediumImpactTasks: 0,
-    lowImpactTasks: 0,
-    recentTasks: []
+    lowImpactTasks: 0
   });
 
   useEffect(() => {
@@ -41,8 +40,7 @@ function Summary() {
         totalTime: tasks.reduce((acc, task) => acc + (task.duration || 0), 0),
         highImpactTasks: tasks.filter(task => task.leverage === 'High').length,
         mediumImpactTasks: tasks.filter(task => task.leverage === 'Medium').length,
-        lowImpactTasks: tasks.filter(task => task.leverage === 'Low').length,
-        recentTasks: tasks.slice(0, 5) // Get 5 most recent tasks
+        lowImpactTasks: tasks.filter(task => task.leverage === 'Low').length
       };
 
       setSummaryData(summary);
@@ -178,28 +176,6 @@ function Summary() {
                 ></div>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Recent Tasks */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">Recent Tasks</h3>
-          <div className="space-y-3">
-            {summaryData.recentTasks.map((task, index) => (
-              <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                <div>
-                  <div className="font-medium">{task.task_name}</div>
-                  <div className="text-sm text-gray-500">{formatTime(task.duration)}</div>
-                </div>
-                <div className={`px-3 py-1 rounded text-sm ${
-                  task.leverage === 'High' ? 'bg-green-100 text-green-800' :
-                  task.leverage === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-                  'bg-red-100 text-red-800'
-                }`}>
-                  {task.leverage || 'Unrated'}
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </div>
