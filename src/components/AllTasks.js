@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
 
 function AllTasks() {
   const [tasks, setTasks] = useState([]);
   const [user, setUser] = useState(null);
   const [showAddTask, setShowAddTask] = useState(false);
+  const [timeFilter, setTimeFilter] = useState('24h');
+  const [dateRange, setDateRange] = useState([null, null]);
+  const [startDate, endDate] = dateRange;
   const [newTask, setNewTask] = useState({
     task_name: '',
     date: '',
@@ -29,15 +34,44 @@ function AllTasks() {
     getUser();
   }, [navigate]);
 
-  // Fetch all tasks
+  // Fetch tasks with filters
   const fetchTasks = async (userId) => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('tasks')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
+      // Apply time filter
+      const now = new Date();
+      if (dateRange[0] && dateRange[1]) {
+        // Date range filter
+        query = query
+          .gte('start_time', dateRange[0].toISOString())
+          .lte('start_time', dateRange[1].toISOString());
+      } else {
+        // Time period filter
+        switch (timeFilter) {
+          case '24h':
+            const last24h = new Date(now - 24 * 60 * 60 * 1000);
+            query = query.gte('start_time', last24h.toISOString());
+            break;
+          case '7d':
+            const last7d = new Date(now - 7 * 24 * 60 * 60 * 1000);
+            query = query.gte('start_time', last7d.toISOString());
+            break;
+          case '1m':
+            const lastMonth = new Date(now);
+            lastMonth.setMonth(lastMonth.getMonth() - 1);
+            query = query.gte('start_time', lastMonth.toISOString());
+            break;
+          default:
+            break;
+        }
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       setTasks(data || []);
     } catch (error) {
@@ -86,10 +120,7 @@ function AllTasks() {
   const handleAddTask = async (e) => {
     e.preventDefault();
     try {
-      // Convert hours and minutes to seconds
       const durationInSeconds = (parseInt(newTask.hours) * 3600) + (parseInt(newTask.minutes) * 60);
-
-      // Combine date and time for start_time
       const startDateTime = new Date(newTask.date + 'T' + newTask.start_time);
       
       const { error } = await supabase
@@ -104,7 +135,6 @@ function AllTasks() {
 
       if (error) throw error;
 
-      // Reset form and fetch updated tasks
       setNewTask({
         task_name: '',
         date: '',
@@ -144,9 +174,23 @@ function AllTasks() {
     });
   };
 
+  // Handle filter changes
+  const handleTimeFilterChange = (value) => {
+    setTimeFilter(value);
+    setDateRange([null, null]); // Reset date range when changing time filter
+    setTimeout(() => fetchTasks(user.id), 0);
+  };
+
+  const handleDateRangeChange = (update) => {
+    setDateRange(update);
+    if (update[0] && update[1]) {
+      setTimeFilter('custom'); // Reset time filter when using date range
+      setTimeout(() => fetchTasks(user.id), 0);
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto p-6">
-
       {/* Navigation Bar */}
       <nav className="bg-white shadow-sm mb-6">
         <div className="max-w-7xl mx-auto px-4">
@@ -202,8 +246,6 @@ function AllTasks() {
         </div>
       </nav>
 
-  
-
       {/* All Tasks Content */}
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex justify-between items-center mb-4">
@@ -214,6 +256,45 @@ function AllTasks() {
           >
             {showAddTask ? 'Cancel' : 'Add Task'}
           </button>
+        </div>
+
+        {/* Filters Section */}
+        <div className="flex items-center space-x-4 mb-6">
+          <select
+            value={timeFilter}
+            onChange={(e) => handleTimeFilterChange(e.target.value)}
+            className="p-2 border rounded text-sm bg-white"
+          >
+            <option value="24h">Last 24 hours</option>
+            <option value="7d">Last 7 days</option>
+            <option value="1m">Last month</option>
+            {timeFilter === 'custom' && <option value="custom">Custom Range</option>}
+          </select>
+
+          <div className="relative flex items-center">
+            <DatePicker
+              selectsRange={true}
+              startDate={startDate}
+              endDate={endDate}
+              onChange={handleDateRangeChange}
+              className="p-2 border rounded text-sm bg-white pr-8"
+              placeholderText="Select date range"
+              isClearable={true}
+            />
+            <svg 
+              className="w-5 h-5 absolute right-2 pointer-events-none text-gray-400"
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={2} 
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" 
+              />
+            </svg>
+          </div>
         </div>
 
         {/* Manual Task Entry Form */}
