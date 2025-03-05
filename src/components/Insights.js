@@ -84,37 +84,72 @@ function Insights() {
     return `${hour % 12 || 12}${hour < 12 ? 'AM' : 'PM'}`;
   };
 
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      navigate('/login');
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto p-6">
       {/* Navigation Bar */}
-      <div className="mb-6 flex justify-between items-center">
-        <div className="flex space-x-4">
-          <button
-            onClick={() => navigate('/timer')}
-            className="bg-white text-black px-4 py-2 rounded border border-gray-300 hover:bg-gray-100"
-          >
-            Timer
-          </button>
-          <button
-            onClick={() => navigate('/alltasks')}
-            className="bg-white text-black px-4 py-2 rounded border border-gray-300 hover:bg-gray-100"
-          >
-            All Tasks
-          </button>
-          <button
-            onClick={() => navigate('/summary')}
-            className="bg-white text-black px-4 py-2 rounded border border-gray-300 hover:bg-gray-100"
-          >
-            Summary
-          </button>
-          <button
-            onClick={() => navigate('/insights')}
-            className="bg-white text-black px-4 py-2 rounded border border-gray-300 hover:bg-gray-100"
-          >
-            Insights
-          </button>
+      <nav className="bg-white shadow-sm mb-6">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex justify-between h-16">
+            {/* Left side - Logo */}
+            <div className="flex items-center">
+              <div 
+                onClick={() => navigate('/')}
+                className="text-xl font-bold text-blue-600 cursor-pointer"
+              >
+                TimeWell
+              </div>
+            </div>
+
+            {/* Middle - Navigation Links */}
+            <div className="flex items-center justify-center flex-1 px-2 space-x-8">
+              <button
+                onClick={() => navigate('/timer')}
+                className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium"
+              >
+                Timer
+              </button>
+              <button
+                onClick={() => navigate('/alltasks')}
+                className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium"
+              >
+                All Tasks
+              </button>
+              <button
+                onClick={() => navigate('/summary')}
+                className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium"
+              >
+                Summary
+              </button>
+              <button
+                onClick={() => navigate('/insights')}
+                className="text-blue-600 hover:text-blue-700 px-3 py-2 text-sm font-medium"
+              >
+                Insights
+              </button>
+            </div>
+
+            {/* Right side - Logout */}
+            <div className="flex items-center">
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+              >
+                Log Out
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      </nav>
 
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800">Your Productivity Insights</h1>
