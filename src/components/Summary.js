@@ -32,8 +32,7 @@ function Summary() {
     totalTime: 0,
     highImpactTasks: 0,
     mediumImpactTasks: 0,
-    lowImpactTasks: 0,
-    hourlyData: Array(24).fill({ high: 0, medium: 0, low: 0, noRank: 0 })
+    lowImpactTasks: 0
   });
 
   useEffect(() => {
@@ -49,34 +48,6 @@ function Summary() {
     getUser();
   }, [navigate]);
 
-  const processTimePatternData = (tasks) => {
-    const hourlyData = Array(24).fill(0).map(() => ({
-      high: 0,
-      medium: 0,
-      low: 0,
-      noRank: 0
-    }));
-
-    tasks.forEach(task => {
-      if (task.start_time) {
-        const hour = new Date(task.start_time).getHours();
-        const duration = task.duration / 3600; // Convert seconds to hours
-
-        if (task.leverage === 'High') {
-          hourlyData[hour].high += duration;
-        } else if (task.leverage === 'Medium') {
-          hourlyData[hour].medium += duration;
-        } else if (task.leverage === 'Low') {
-          hourlyData[hour].low += duration;
-        } else {
-          hourlyData[hour].noRank += duration;
-        }
-      }
-    });
-
-    return hourlyData;
-  };
-
   const fetchSummaryData = async (userId) => {
     try {
       const { data: tasks, error } = await supabase
@@ -86,15 +57,12 @@ function Summary() {
 
       if (error) throw error;
 
-      const hourlyData = processTimePatternData(tasks);
-
       const summary = {
         totalTasks: tasks.length,
         totalTime: tasks.reduce((acc, task) => acc + (task.duration || 0), 0),
         highImpactTasks: tasks.filter(task => task.leverage === 'High').length,
         mediumImpactTasks: tasks.filter(task => task.leverage === 'Medium').length,
-        lowImpactTasks: tasks.filter(task => task.leverage === 'Low').length,
-        hourlyData: hourlyData
+        lowImpactTasks: tasks.filter(task => task.leverage === 'Low').length
       };
 
       setSummaryData(summary);
@@ -102,9 +70,6 @@ function Summary() {
       console.error("Error fetching summary data:", error);
     }
   };
-
-  // ... existing handleLogout and formatTime functions ...
-  // ... continuing from Part 1 ...
 
   const handleLogout = async () => {
     try {
@@ -122,89 +87,84 @@ function Summary() {
     return `${hours}h ${minutes}m`;
   };
 
-  // Existing chart data and options
+  // Chart data and options
   const barChartData = {
-    // ... your existing barChartData ...
+    labels: ['High Impact', 'Medium Impact', 'Low Impact', 'No Ranking'],
+    datasets: [{
+      data: [
+        summaryData.highImpactTasks,
+        summaryData.mediumImpactTasks,
+        summaryData.lowImpactTasks,
+        summaryData.totalTasks - (summaryData.highImpactTasks + summaryData.mediumImpactTasks + summaryData.lowImpactTasks)
+      ],
+      backgroundColor: [
+        'rgba(34, 197, 94, 0.6)',  // green
+        'rgba(234, 179, 8, 0.6)',   // yellow
+        'rgba(239, 68, 68, 0.6)',   // red
+        'rgba(156, 163, 175, 0.6)'  // gray
+      ],
+      borderColor: [
+        'rgb(34, 197, 94)',
+        'rgb(234, 179, 8)',
+        'rgb(239, 68, 68)',
+        'rgb(156, 163, 175)'
+      ],
+      borderWidth: 1
+    }]
   };
 
   const donutChartData = {
-    // ... your existing donutChartData ...
+    labels: ['High Impact', 'Medium Impact', 'Low Impact'],
+    datasets: [{
+      data: [
+        summaryData.highImpactTasks,
+        summaryData.mediumImpactTasks,
+        summaryData.lowImpactTasks
+      ],
+      backgroundColor: [
+        'rgba(34, 197, 94, 0.6)',
+        'rgba(234, 179, 8, 0.6)',
+        'rgba(239, 68, 68, 0.6)'
+      ],
+      borderColor: [
+        'rgb(34, 197, 94)',
+        'rgb(234, 179, 8)',
+        'rgb(239, 68, 68)'
+      ],
+      borderWidth: 1
+    }]
   };
 
   const barOptions = {
-    // ... your existing barOptions ...
-  };
-
-  const donutOptions = {
-    // ... your existing donutOptions ...
-  };
-
-  // New time pattern chart data and options
-  const timePatternData = {
-    labels: Array.from({ length: 24 }, (_, i) => 
-      i === 0 ? '12 AM' : 
-      i < 12 ? `${i} AM` : 
-      i === 12 ? '12 PM' : 
-      `${i - 12} PM`
-    ),
-    datasets: [
-      {
-        label: 'High Impact',
-        data: summaryData.hourlyData.map(h => h.high),
-        backgroundColor: 'rgba(34, 197, 94, 0.6)',
-        borderColor: 'rgb(34, 197, 94)',
-        borderWidth: 1,
-      },
-      {
-        label: 'Medium Impact',
-        data: summaryData.hourlyData.map(h => h.medium),
-        backgroundColor: 'rgba(234, 179, 8, 0.6)',
-        borderColor: 'rgb(234, 179, 8)',
-        borderWidth: 1,
-      },
-      {
-        label: 'Low Impact',
-        data: summaryData.hourlyData.map(h => h.low),
-        backgroundColor: 'rgba(239, 68, 68, 0.6)',
-        borderColor: 'rgb(239, 68, 68)',
-        borderWidth: 1,
-      },
-      {
-        label: 'No Ranking',
-        data: summaryData.hourlyData.map(h => h.noRank),
-        backgroundColor: 'rgba(156, 163, 175, 0.6)',
-        borderColor: 'rgb(156, 163, 175)',
-        borderWidth: 1,
-      }
-    ]
-  };
-
-  const timePatternOptions = {
     responsive: true,
-    scales: {
-      x: {
-        stacked: true,
-        title: {
-          display: true,
-          text: 'Time of Day'
-        }
-      },
-      y: {
-        stacked: true,
-        title: {
-          display: true,
-          text: 'Duration (hours)'
-        }
-      }
-    },
     plugins: {
       legend: {
-        display: true,
-        position: 'top'
+        display: false
       },
       title: {
         display: true,
-        text: 'Task Duration Pattern by Time of Day'
+        text: 'Task Distribution by Impact Level'
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          stepSize: 1
+        }
+      }
+    }
+  };
+
+  const donutOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'bottom'
+      },
+      title: {
+        display: true,
+        text: 'Impact Level Distribution'
       }
     }
   };
@@ -213,14 +173,71 @@ function Summary() {
     <div className="max-w-2xl mx-auto p-6">
       {/* Navigation Bar */}
       <nav className="bg-white shadow-sm mb-6">
-        {/* ... your existing navigation code ... */}
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex justify-between h-16">
+            {/* Left side - Logo */}
+            <div className="flex items-center">
+              <div 
+                onClick={() => navigate('/')}
+                className="text-xl font-bold text-blue-600 cursor-pointer"
+              >
+                TimeWell
+              </div>
+            </div>
+
+            {/* Middle - Navigation Links */}
+            <div className="flex items-center justify-center flex-1 px-2 space-x-8">
+              <button
+                onClick={() => navigate('/timer')}
+                className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium"
+              >
+                Timer
+              </button>
+              <button
+                onClick={() => navigate('/alltasks')}
+                className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium"
+              >
+                All Tasks
+              </button>
+              <button
+                onClick={() => navigate('/summary')}
+                className="text-blue-600 hover:text-blue-700 px-3 py-2 text-sm font-medium"
+              >
+                Summary
+              </button>
+              <button
+                onClick={() => navigate('/insights')}
+                className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium"
+              >
+                Insights
+              </button>
+            </div>
+
+            {/* Right side - Logout */}
+            <div className="flex items-center">
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+              >
+                Log Out
+              </button>
+            </div>
+          </div>
+        </div>
       </nav>
 
       {/* Summary Content */}
       <div className="space-y-6">
         {/* Overview Cards */}
         <div className="grid grid-cols-2 gap-4">
-          {/* ... your existing overview cards ... */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold mb-2">Total Time Tracked</h3>
+            <p className="text-3xl font-bold text-blue-600">{formatTime(summaryData.totalTime)}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold mb-2">Total Tasks</h3>
+            <p className="text-3xl font-bold text-blue-600">{summaryData.totalTasks}</p>
+          </div>
         </div>
 
         {/* Charts Section */}
@@ -236,14 +253,47 @@ function Summary() {
           </div>
         </div>
 
-        {/* Time Pattern Chart */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <Bar data={timePatternData} options={timePatternOptions} />
-        </div>
-
         {/* Impact Distribution */}
         <div className="bg-white rounded-lg shadow p-6">
-          {/* ... your existing impact distribution code ... */}
+          <h3 className="text-lg font-semibold mb-4">Task Impact Distribution</h3>
+          <div className="space-y-3">
+            <div>
+              <div className="flex justify-between mb-1">
+                <span>High Impact</span>
+                <span>{summaryData.highImpactTasks} tasks</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-green-500 h-2 rounded-full" 
+                  style={{ width: `${(summaryData.highImpactTasks / summaryData.totalTasks * 100) || 0}%` }}
+                ></div>
+              </div>
+            </div>
+            <div>
+              <div className="flex justify-between mb-1">
+                <span>Medium Impact</span>
+                <span>{summaryData.mediumImpactTasks} tasks</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-yellow-500 h-2 rounded-full" 
+                  style={{ width: `${(summaryData.mediumImpactTasks / summaryData.totalTasks * 100) || 0}%` }}
+                ></div>
+              </div>
+            </div>
+            <div>
+              <div className="flex justify-between mb-1">
+                <span>Low Impact</span>
+                <span>{summaryData.lowImpactTasks} tasks</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-red-500 h-2 rounded-full" 
+                  style={{ width: `${(summaryData.lowImpactTasks / summaryData.totalTasks * 100) || 0}%` }}
+                ></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
