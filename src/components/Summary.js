@@ -13,7 +13,6 @@ import {
   ArcElement
 } from 'chart.js';
 
-// Register ChartJS components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -87,7 +86,7 @@ function Summary() {
     return `${hours}h ${minutes}m`;
   };
 
-  // Chart data and options
+  // Modern Chart Configuration
   const barChartData = {
     labels: ['High Impact', 'Medium Impact', 'Low Impact', 'No Ranking'],
     datasets: [{
@@ -98,18 +97,14 @@ function Summary() {
         summaryData.totalTasks - (summaryData.highImpactTasks + summaryData.mediumImpactTasks + summaryData.lowImpactTasks)
       ],
       backgroundColor: [
-        'rgba(34, 197, 94, 0.6)',  // green
-        'rgba(234, 179, 8, 0.6)',   // yellow
-        'rgba(239, 68, 68, 0.6)',   // red
-        'rgba(156, 163, 175, 0.6)'  // gray
+        'rgba(30, 58, 138, 0.9)',   // Darkest blue - High Impact
+        'rgba(59, 130, 246, 0.9)',  // Medium blue - Medium Impact
+        'rgba(191, 219, 254, 0.9)', // Light blue - Low Impact
+        'rgba(226, 232, 240, 0.9)'  // Very light blue - No Ranking
       ],
-      borderColor: [
-        'rgb(34, 197, 94)',
-        'rgb(234, 179, 8)',
-        'rgb(239, 68, 68)',
-        'rgb(156, 163, 175)'
-      ],
-      borderWidth: 1
+      borderRadius: 8,
+      borderSkipped: false,
+      maxBarThickness: 50
     }]
   };
 
@@ -122,60 +117,113 @@ function Summary() {
         summaryData.lowImpactTasks
       ],
       backgroundColor: [
-        'rgba(34, 197, 94, 0.6)',
-        'rgba(234, 179, 8, 0.6)',
-        'rgba(239, 68, 68, 0.6)'
+        'rgba(30, 58, 138, 0.9)',   // Darkest blue - High Impact
+        'rgba(59, 130, 246, 0.9)',  // Medium blue - Medium Impact
+        'rgba(191, 219, 254, 0.9)'  // Light blue - Low Impact
       ],
-      borderColor: [
-        'rgb(34, 197, 94)',
-        'rgb(234, 179, 8)',
-        'rgb(239, 68, 68)'
-      ],
-      borderWidth: 1
+      borderWidth: 0
     }]
   };
 
   const barOptions = {
     responsive: true,
+    maintainAspectRatio: true,
     plugins: {
       legend: {
         display: false
       },
       title: {
         display: true,
-        text: 'Task Distribution by Impact Level'
+        text: 'Task Distribution by Impact Level',
+        font: {
+          size: 16,
+          family: "'Inter', sans-serif",
+          weight: '500'
+        },
+        padding: {
+          top: 20,
+          bottom: 20
+        },
+        color: '#1e3a8a'  // Dark blue
       }
     },
     scales: {
       y: {
         beginAtZero: true,
         ticks: {
-          stepSize: 1
+          stepSize: 1,
+          font: {
+            family: "'Inter', sans-serif"
+          },
+          color: '#64748b'  // Slate gray
+        },
+        grid: {
+          display: false
+        }
+      },
+      x: {
+        ticks: {
+          font: {
+            family: "'Inter', sans-serif"
+          },
+          color: '#64748b'  // Slate gray
+        },
+        grid: {
+          display: false
         }
       }
+    },
+    animation: {
+      duration: 2000,
+      easing: 'easeInOutQuart'
     }
   };
 
   const donutOptions = {
     responsive: true,
+    maintainAspectRatio: true,
     plugins: {
       legend: {
-        position: 'bottom'
+        position: 'bottom',
+        labels: {
+          font: {
+            family: "'Inter', sans-serif",
+            size: 12
+          },
+          padding: 20,
+          usePointStyle: true
+        }
       },
       title: {
         display: true,
-        text: 'Impact Level Distribution'
+        text: 'Impact Level Distribution',
+        font: {
+          size: 16,
+          family: "'Inter', sans-serif",
+          weight: '500'
+        },
+        padding: {
+          top: 20,
+          bottom: 20
+        },
+        color: '#1e3a8a'  // Dark blue
       }
+    },
+    cutout: '65%',
+    animation: {
+      animateScale: true,
+      animateRotate: true,
+      duration: 2000,
+      easing: 'easeInOutQuart'
     }
   };
 
   return (
     <div className="max-w-2xl mx-auto p-6">
-      {/* Navigation Bar */}
+      {/* Navigation Bar - Keeping existing navigation */}
       <nav className="bg-white shadow-sm mb-6">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between h-16">
-            {/* Left side - Logo */}
             <div className="flex items-center">
               <div 
                 onClick={() => navigate('/')}
@@ -185,7 +233,6 @@ function Summary() {
               </div>
             </div>
 
-            {/* Middle - Navigation Links */}
             <div className="flex items-center justify-center flex-1 px-2 space-x-8">
               <button
                 onClick={() => navigate('/timer')}
@@ -213,7 +260,6 @@ function Summary() {
               </button>
             </div>
 
-            {/* Right side - Logout */}
             <div className="flex items-center">
               <button
                 onClick={handleLogout}
@@ -231,23 +277,21 @@ function Summary() {
         {/* Overview Cards */}
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold mb-2">Total Time Tracked</h3>
-            <p className="text-3xl font-bold text-blue-600">{formatTime(summaryData.totalTime)}</p>
+            <h3 className="text-lg font-semibold mb-2 text-gray-700">Total Time Tracked</h3>
+            <p className="text-3xl font-bold text-blue-900">{formatTime(summaryData.totalTime)}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold mb-2">Total Tasks</h3>
-            <p className="text-3xl font-bold text-blue-600">{summaryData.totalTasks}</p>
+            <h3 className="text-lg font-semibold mb-2 text-gray-700">Total Tasks</h3>
+            <p className="text-3xl font-bold text-blue-900">{summaryData.totalTasks}</p>
           </div>
         </div>
 
         {/* Charts Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Bar Chart */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white rounded-lg shadow p-6">
             <Bar data={barChartData} options={barOptions} />
           </div>
 
-          {/* Donut Chart */}
           <div className="bg-white rounded-lg shadow p-6">
             <Doughnut data={donutChartData} options={donutOptions} />
           </div>
@@ -255,40 +299,40 @@ function Summary() {
 
         {/* Impact Distribution */}
         <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">Task Impact Distribution</h3>
-          <div className="space-y-3">
+          <h3 className="text-lg font-semibold mb-4 text-gray-700">Task Impact Distribution</h3>
+          <div className="space-y-4">
             <div>
-              <div className="flex justify-between mb-1">
-                <span>High Impact</span>
-                <span>{summaryData.highImpactTasks} tasks</span>
+              <div className="flex justify-between mb-2">
+                <span className="text-sm font-medium text-gray-600">High Impact</span>
+                <span className="text-sm font-medium text-gray-600">{summaryData.highImpactTasks} tasks</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-gray-100 rounded-full h-2.5">
                 <div 
-                  className="bg-green-500 h-2 rounded-full" 
+                  className="bg-blue-900 h-2.5 rounded-full transition-all duration-500" 
                   style={{ width: `${(summaryData.highImpactTasks / summaryData.totalTasks * 100) || 0}%` }}
                 ></div>
               </div>
             </div>
             <div>
-              <div className="flex justify-between mb-1">
-                <span>Medium Impact</span>
-                <span>{summaryData.mediumImpactTasks} tasks</span>
+              <div className="flex justify-between mb-2">
+                <span className="text-sm font-medium text-gray-600">Medium Impact</span>
+                <span className="text-sm font-medium text-gray-600">{summaryData.mediumImpactTasks} tasks</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-gray-100 rounded-full h-2.5">
                 <div 
-                  className="bg-yellow-500 h-2 rounded-full" 
+                  className="bg-blue-500 h-2.5 rounded-full transition-all duration-500" 
                   style={{ width: `${(summaryData.mediumImpactTasks / summaryData.totalTasks * 100) || 0}%` }}
                 ></div>
               </div>
             </div>
             <div>
-              <div className="flex justify-between mb-1">
-                <span>Low Impact</span>
-                <span>{summaryData.lowImpactTasks} tasks</span>
+              <div className="flex justify-between mb-2">
+                <span className="text-sm font-medium text-gray-600">Low Impact</span>
+                <span className="text-sm font-medium text-gray-600">{summaryData.lowImpactTasks} tasks</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-gray-100 rounded-full h-2.5">
                 <div 
-                  className="bg-red-500 h-2 rounded-full" 
+                  className="bg-blue-200 h-2.5 rounded-full transition-all duration-500" 
                   style={{ width: `${(summaryData.lowImpactTasks / summaryData.totalTasks * 100) || 0}%` }}
                 ></div>
               </div>
