@@ -173,7 +173,57 @@ function Summary() {
     <div className="max-w-2xl mx-auto p-6">
       {/* Navigation Bar */}
       <nav className="bg-white shadow-sm mb-6">
-        {/* ... existing navigation code ... */}
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex justify-between h-16">
+            {/* Left side - Logo */}
+            <div className="flex items-center">
+              <div 
+                onClick={() => navigate('/')}
+                className="text-xl font-bold text-blue-600 cursor-pointer"
+              >
+                TimeWell
+              </div>
+            </div>
+
+            {/* Middle - Navigation Links */}
+            <div className="flex items-center justify-center flex-1 px-2 space-x-8">
+              <button
+                onClick={() => navigate('/timer')}
+                className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium"
+              >
+                Timer
+              </button>
+              <button
+                onClick={() => navigate('/alltasks')}
+                className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium"
+              >
+                All Tasks
+              </button>
+              <button
+                onClick={() => navigate('/summary')}
+                className="text-blue-600 hover:text-blue-700 px-3 py-2 text-sm font-medium"
+              >
+                Summary
+              </button>
+              <button
+                onClick={() => navigate('/insights')}
+                className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium"
+              >
+                Insights
+              </button>
+            </div>
+
+            {/* Right side - Logout */}
+            <div className="flex items-center">
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+              >
+                Log Out
+              </button>
+            </div>
+          </div>
+        </div>
       </nav>
 
       {/* Summary Content */}
