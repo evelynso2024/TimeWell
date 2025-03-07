@@ -13,7 +13,6 @@ import {
 import { Bar, Doughnut } from 'react-chartjs-2';
 import { Container, Row, Col, Card, ProgressBar } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import Navigation from './Navigation';
 
 ChartJS.register(
   CategoryScale,
@@ -29,7 +28,6 @@ ChartJS.register(
 function Summary() {
   const navigate = useNavigate();
 
-  // Sample data - replace with your actual data
   const taskData = {
     labels: ['High', 'Medium', 'Low'],
     datasets: [
@@ -86,7 +84,6 @@ function Summary() {
 
   return (
     <div>
-      <Navigation />
       <Container className="mt-4">
         <Row className="mb-4">
           <Col md={6}>
