@@ -13,7 +13,7 @@ import {
 import { Bar, Doughnut } from 'react-chartjs-2';
 import { Container, Row, Col, Card, ProgressBar } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import NavigationBar from './NavigationBar';
+import Navigation from './Navigation';
 
 ChartJS.register(
   CategoryScale,
@@ -86,7 +86,7 @@ function Summary() {
 
   return (
     <div>
-      <NavigationBar />
+      <Navigation />
       <Container className="mt-4">
         <Row className="mb-4">
           <Col md={6}>
